@@ -12,6 +12,10 @@ import (
 	"github.com/timtadh/getopt"
 )
 
+import (
+	"github.com/timtadh/cc-survey/views"
+)
+
 
 var ErrorCodes map[string]int = map[string]int{
 	"usage":   0,
@@ -41,7 +45,6 @@ func Usage(code int) {
 	os.Exit(code)
 }
 
-
 func main() {
 	_, optargs, err := getopt.GetOpt(
 		os.Args[1:],
@@ -67,10 +70,9 @@ func main() {
 		}
 	}
 
-	mux := http.NewServeMux()
 	server := &http.Server{
 		Addr: listen,
-		Handler: mux,
+		Handler: views.Routes(),
 		ReadTimeout: 1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 		MaxHeaderBytes: http.DefaultMaxHeaderBytes,
@@ -80,9 +82,6 @@ func main() {
 		ErrorLog: nil,
 	}
 
-	mux.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
-		rw.Write([]byte("hello"))
-	})
 
 	err = server.ListenAndServe()
 	if err != nil {
