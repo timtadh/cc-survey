@@ -32,6 +32,9 @@ cc-survey
 
 Options
     -h, --help                          view this message
+    -l, --listen=<addr>:<port>          what to listen on
+                                        default: 0.0.0.0:80
+    -a, --assets=<path>                 path to asset dir or tar.gz
 `
 
 func Usage(code int) {
@@ -39,8 +42,6 @@ func Usage(code int) {
 	if code == 0 {
 		fmt.Fprintln(os.Stdout, ExtendedMessage)
 		code = ErrorCodes["usage"]
-	} else {
-		fmt.Fprintln(os.Stderr, "Try -h or --help for help")
 	}
 	os.Exit(code)
 }
@@ -48,8 +49,8 @@ func Usage(code int) {
 func main() {
 	_, optargs, err := getopt.GetOpt(
 		os.Args[1:],
-		"hl:",
-		[]string{ "help", "listen=" },
+		"hl:a:",
+		[]string{ "help", "listen=", "assets", },
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error parsing command line flags", err)
@@ -57,6 +58,7 @@ func main() {
 	}
 
 	listen := "0.0.0.0:80"
+	assets := ""
 	for _, oa := range optargs {
 		switch oa.Opt() {
 		case "-h", "--help":
@@ -64,15 +66,22 @@ func main() {
 			os.Exit(0)
 		case "-l", "--listen":
 			listen = oa.Arg()
+		case "-a", "--assets":
+			assets = oa.Arg()
 		default:
 			fmt.Fprintf(os.Stderr, "Unknown flag '%v'\n", oa.Opt())
 			Usage(ErrorCodes["opts"])
 		}
 	}
 
+	if assets == "" {
+		fmt.Fprintln(os.Stderr, "You must supply a path to the assets")
+		Usage(ErrorCodes["opts"])
+	}
+
 	server := &http.Server{
 		Addr: listen,
-		Handler: views.Routes(),
+		Handler: views.Routes(assets),
 		ReadTimeout: 1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 		MaxHeaderBytes: http.DefaultMaxHeaderBytes,
