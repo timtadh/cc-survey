@@ -40,7 +40,10 @@ func Routes(assetPath, clonesPath string) http.Handler {
 		clonesPath: filepath.Clean(clonesPath),
 		sessions: session.NewMapStore("session"),
 	}
-	mux.GET("/", v.Log(v.sessions.Session(func(s *session.Session) httprouter.Handle { return v.Context(s).Index })))
+	mux.GET("/", v.sessions.Session(func(s *session.Session) httprouter.Handle { 
+		c := v.Context(s)
+		return c.Log(c.Index)
+	}))
 	v.Init()
 	return mux
 }

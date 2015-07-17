@@ -3,6 +3,7 @@ package views
 import (
 	"log"
 	"net/http"
+	"time"
 )
 
 import (
@@ -28,11 +29,13 @@ func (l *loggingRW) WriteHeader(code int) {
 	l.rw.WriteHeader(code)
 }
 
-func (v *Views) Log(f httprouter.Handle) httprouter.Handle {
+func (c *Context) Log(f httprouter.Handle) httprouter.Handle {
 	return func(rw http.ResponseWriter, r *http.Request, p httprouter.Params) {
 		lrw := &loggingRW{rw: rw}
+		s := time.Now()
 		f(lrw, r, p)
-		log.Printf("%v %v (%v) (%d)", r.RemoteAddr, r.URL, r.ContentLength, lrw.total)
+		e := time.Now()
+		log.Printf("%v %v (%v) %v (%d) %v", r.RemoteAddr, r.URL, r.ContentLength, c.s.Key(), lrw.total, e.Sub(s))
 	}
 }
 
