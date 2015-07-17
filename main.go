@@ -34,7 +34,8 @@ Options
     -h, --help                          view this message
     -l, --listen=<addr>:<port>          what to listen on
                                         default: 0.0.0.0:80
-    -a, --assets=<path>                 path to asset dir or tar.gz
+    -a, --assets=<path>                 path to asset dir
+    -c, --clones=<path>                 path to clones dir
 `
 
 func Usage(code int) {
@@ -49,8 +50,8 @@ func Usage(code int) {
 func main() {
 	_, optargs, err := getopt.GetOpt(
 		os.Args[1:],
-		"hl:a:",
-		[]string{ "help", "listen=", "assets", },
+		"hl:a:c:",
+		[]string{ "help", "listen=", "assets", "clones=" },
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error parsing command line flags", err)
@@ -59,6 +60,7 @@ func main() {
 
 	listen := "0.0.0.0:80"
 	assets := ""
+	clones := ""
 	for _, oa := range optargs {
 		switch oa.Opt() {
 		case "-h", "--help":
@@ -68,6 +70,8 @@ func main() {
 			listen = oa.Arg()
 		case "-a", "--assets":
 			assets = oa.Arg()
+		case "-c", "--clones":
+			clones = oa.Arg()
 		default:
 			fmt.Fprintf(os.Stderr, "Unknown flag '%v'\n", oa.Opt())
 			Usage(ErrorCodes["opts"])
@@ -78,10 +82,17 @@ func main() {
 		fmt.Fprintln(os.Stderr, "You must supply a path to the assets")
 		Usage(ErrorCodes["opts"])
 	}
+	
+	if clones == "" {
+		fmt.Fprintln(os.Stderr, "You must supply a path to the clones")
+		Usage(ErrorCodes["opts"])
+	}
+
+	handler := views.Routes(assets, clones)
 
 	server := &http.Server{
 		Addr: listen,
-		Handler: views.Routes(assets),
+		Handler: handler,
 		ReadTimeout: 1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 		MaxHeaderBytes: http.DefaultMaxHeaderBytes,
@@ -90,7 +101,6 @@ func main() {
 		ConnState: nil,
 		ErrorLog: nil,
 	}
-
 
 	err = server.ListenAndServe()
 	if err != nil {

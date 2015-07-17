@@ -14,19 +14,53 @@ import (
     "github.com/julienschmidt/httprouter"
 )
 
+import (
+	"github.com/timtadh/cc-survey/clones"
+	"github.com/timtadh/cc-survey/session"
+)
+
 type Views struct {
 	assetPath string
+	clonesPath string
+	sessions session.Store
 	tmpl *template.Template
+	clones []*clones.Clone
 }
 
-func Routes(assetPath string) http.Handler {
+type Context struct {
+	v *Views
+	s *session.Session
+}
+
+
+func Routes(assetPath, clonesPath string) http.Handler {
 	mux := httprouter.New()
 	v := &Views{
 		assetPath: filepath.Clean(assetPath),
+		clonesPath: filepath.Clean(clonesPath),
+		sessions: session.NewMapStore("session"),
 	}
-	mux.GET("/", v.Index)
-	v.loadTemplates()
+	mux.GET("/", v.Log(v.sessions.Session(func(s *session.Session) httprouter.Handle { return v.Context(s).Index })))
+	v.Init()
 	return mux
+}
+
+func (v *Views) Init() {
+	v.loadTemplates()
+	v.loadClones()
+}
+
+func (v *Views) Context(s *session.Session) *Context {
+	return &Context{v, s}
+}
+
+func (v *Views) loadClones() {
+	c, err := clones.LoadAll(v.clonesPath)
+	if err != nil {
+		log.Panic(err)
+	}
+	v.clones = c
+	log.Println("loaded clones", len(v.clones))
 }
 
 func (v *Views) loadTemplates() {
@@ -39,8 +73,6 @@ func (v *Views) loadTemplates() {
 	v.tmpl = template.New("!")
 	if s.IsDir() {
 		v.loadTemplatesFromDir("", filepath.Join(v.assetPath, "templates"), v.tmpl)
-	} else if strings.HasSuffix(v.assetPath, ".tar.gz") {
-		v.loadTemplatesFromTarGz()
 	} else {
 		log.Fatalf("Could not load assets from %v. Unknown file type", v.assetPath)
 	}
@@ -84,7 +116,4 @@ func (v *Views) loadTemplate(name, content string, t *template.Template) {
 	if err != nil {
 		log.Panic(err)
 	}
-}
-
-func (v *Views) loadTemplatesFromTarGz() {
 }
