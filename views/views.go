@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 )
@@ -16,31 +17,62 @@ import (
 
 import (
 	"github.com/timtadh/cc-survey/clones"
-	"github.com/timtadh/cc-survey/session"
+	"github.com/timtadh/cc-survey/models"
+	"github.com/timtadh/cc-survey/models/mem"
+	"github.com/timtadh/cc-survey/models/file"
 )
 
 type Views struct {
 	assetPath string
 	clonesPath string
-	sessions session.Store
+	sessions models.SessionStore
+	users models.UserStore
 	tmpl *template.Template
 	clones []*clones.Clone
 }
 
 type Context struct {
 	v *Views
-	s *session.Session
+	s *models.Session
 }
 
+func signalSelf(s os.Signal) {
+	pid := os.Getpid()
+	p, err := os.FindProcess(pid)
+	if err != nil {
+		log.Panic(err)
+	}
+	err = p.Signal(s)
+	if err != nil {
+		log.Panic(err)
+	}
+}
 
 func Routes(assetPath, clonesPath string) http.Handler {
 	mux := httprouter.New()
-	v := &Views{
-		assetPath: filepath.Clean(assetPath),
-		clonesPath: filepath.Clean(clonesPath),
-		sessions: session.NewMapStore("session"),
+	assetPath = filepath.Clean(assetPath)
+	users, err := file.GetUserStore(filepath.Join(assetPath, "data"))
+	if err != nil {
+		log.Panic(err)
 	}
-	mux.GET("/", v.sessions.Session(func(s *session.Session) httprouter.Handle { 
+	go func() {
+		sigs := make(chan os.Signal, 1)
+		signal.Notify(sigs, os.Interrupt, os.Kill)
+		for s := range sigs {
+			users.Close()
+			log.Println("Closed Users")
+			signal.Stop(sigs)
+			signalSelf(s)
+			break
+		}
+	}()
+	v := &Views{
+		assetPath: assetPath,
+		clonesPath: filepath.Clean(clonesPath),
+		sessions: mem.NewSessionMapStore("session"),
+		users: users,
+	}
+	mux.GET("/", v.sessions.Session(func(s *models.Session) httprouter.Handle { 
 		c := v.Context(s)
 		return c.Log(c.Index)
 	}))
@@ -53,7 +85,7 @@ func (v *Views) Init() {
 	v.loadClones()
 }
 
-func (v *Views) Context(s *session.Session) *Context {
+func (v *Views) Context(s *models.Session) *Context {
 	return &Context{v, s}
 }
 

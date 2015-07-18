@@ -4,3 +4,9 @@
 [submodule "src/github.com/julienschmidt/httprouter"]
 	path = src/github.com/julienschmidt/httprouter
 	url = git@github.com:julienschmidt/httprouter
+[submodule "src/golang.org/x/crypto"]
+	path = src/golang.org/x/crypto
+	url = git@github.com:golang/crypto
+[submodule "src/github.com/timtadh/fs2"]
+	path = src/github.com/timtadh/fs2
+	url = git@github.com:timtadh/fs2

@@ -1,4 +1,4 @@
-package session
+package models
 
 import (
 	"encoding/binary"
@@ -22,9 +22,10 @@ type Session struct {
 	usrAgent string
 	created time.Time
 	accessed time.Time
+	user *User
 }
 
-type Store interface {
+type SessionStore interface {
 	Name() string
 	Get(key uint64) (*Session, error)
 	Update(*Session) (error)
@@ -74,7 +75,7 @@ func key(name string, r *http.Request) (uint64, error) {
 	return 0, fmt.Errorf("Failed to extract session key")
 }
 
-func Get(store Store, rw http.ResponseWriter, r *http.Request) (s *Session, err error) {
+func Get(store SessionStore, rw http.ResponseWriter, r *http.Request) (s *Session, err error) {
 	name := store.Name()
 	k, err := key(name, r)
 	if err != nil {
@@ -127,7 +128,11 @@ func (s *Session) Key() uint64 {
 	return s.key
 }
 
-func (s *Session) Invalidate(store Store, rw http.ResponseWriter) error {
+func (s *Session) User() *User {
+	return s.user
+}
+
+func (s *Session) Invalidate(store SessionStore, rw http.ResponseWriter) error {
 	delete(rw.Header(), store.Name())
 	return store.Invalidate(s.key)
 }
