@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/base64"
 	"encoding/binary"
 	"fmt"
 	"log"
@@ -17,12 +18,12 @@ import (
 
 type Session struct {
 	key uint64
-	csrf uint64
+	csrf []byte
 	addr string
 	usrAgent string
 	created time.Time
 	accessed time.Time
-	user *User
+	user string
 }
 
 type SessionStore interface {
@@ -105,7 +106,7 @@ func Get(store SessionStore, rw http.ResponseWriter, r *http.Request) (s *Sessio
 func newSession(r *http.Request) *Session {
 	return &Session{
 		key: randUint64(),
-		csrf: randUint64(),
+		csrf: randBytes(32),
 		addr: ip(r),
 		usrAgent: userAgent(r),
 		created: time.Now().UTC(),
@@ -128,8 +129,20 @@ func (s *Session) Key() uint64 {
 	return s.key
 }
 
-func (s *Session) User() *User {
+func (s *Session) User() string {
 	return s.user
+}
+
+func (s *Session) Csrf(obj string) string {
+	key, err := HashPassword([]byte(obj), s.csrf)
+	if err != nil {
+		log.Panic(err)
+	}
+	return base64.URLEncoding.EncodeToString(key)
+}
+
+func (s *Session) ValidCsrf(obj, token string) bool {
+	return s.Csrf(obj) == token
 }
 
 func (s *Session) Invalidate(store SessionStore, rw http.ResponseWriter) error {

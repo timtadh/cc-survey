@@ -7,7 +7,6 @@ import (
 )
 
 import (
-    "github.com/julienschmidt/httprouter"
 )
 
 type loggingRW struct {
@@ -29,13 +28,16 @@ func (l *loggingRW) WriteHeader(code int) {
 	l.rw.WriteHeader(code)
 }
 
-func (c *Context) Log(f httprouter.Handle) httprouter.Handle {
-	return func(rw http.ResponseWriter, r *http.Request, p httprouter.Params) {
+func (v *Views) Log(f View) View {
+	return func(c *Context) {
+		rw := c.rw
 		lrw := &loggingRW{rw: rw}
+		c.rw = lrw
 		s := time.Now()
-		f(lrw, r, p)
+		f(c)
 		e := time.Now()
-		log.Printf("%v %v (%v) %v (%d) %v", r.RemoteAddr, r.URL, r.ContentLength, c.s.Key(), lrw.total, e.Sub(s))
+		log.Printf("%v %v (%v) %v (%d) %v",
+			c.r.RemoteAddr, c.r.URL, c.r.ContentLength, c.s.Key(), lrw.total, e.Sub(s))
 	}
 }
 

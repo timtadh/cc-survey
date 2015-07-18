@@ -13,6 +13,7 @@ import (
 
 import (
     "github.com/julienschmidt/httprouter"
+	"github.com/gorilla/schema"
 )
 
 import (
@@ -32,9 +33,15 @@ type Views struct {
 }
 
 type Context struct {
-	v *Views
 	s *models.Session
+	u *models.User
+	rw http.ResponseWriter
+	r *http.Request
+	p httprouter.Params
+	formDecoder *schema.Decoder
 }
+
+type View func(*Context)
 
 func signalSelf(s os.Signal) {
 	pid := os.Getpid()
@@ -72,10 +79,12 @@ func Routes(assetPath, clonesPath string) http.Handler {
 		sessions: mem.NewSessionMapStore("session"),
 		users: users,
 	}
-	mux.GET("/", v.sessions.Session(func(s *models.Session) httprouter.Handle { 
-		c := v.Context(s)
-		return c.Log(c.Index)
-	}))
+	mux.GET("/", v.Context(v.Index))
+	mux.GET("/register", v.Context(v.Register))
+	mux.POST("/register", v.Context(v.DoRegister))
+	mux.GET("/login", v.Context(v.Login))
+	mux.POST("/login", v.Context(v.DoLogin))
+	
 	v.Init()
 	return mux
 }
@@ -85,8 +94,16 @@ func (v *Views) Init() {
 	v.loadClones()
 }
 
-func (v *Views) Context(s *models.Session) *Context {
-	return &Context{v, s}
+func (v *Views) Context(f func(c *Context)) httprouter.Handle {
+	return v.sessions.Session(func(s *models.Session) httprouter.Handle { 
+		return func(rw http.ResponseWriter, r *http.Request, p httprouter.Params) {
+			c := &Context{
+				s: s, rw: rw, r: r, p: p,
+				formDecoder: schema.NewDecoder(),
+			}
+			v.Log(f)(c)
+		}
+	})
 }
 
 func (v *Views) loadClones() {

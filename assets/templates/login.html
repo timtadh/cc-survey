@@ -1,0 +1,29 @@
+{{template "header"}}
+<h1>Login</h1>
+<form action="{{.target}}" method="post">
+	<p>
+		<label for="email">
+			Email:
+			<input type="text" id="email" name="email" {{if .form}}{{if .form.Email}} value="{{.form.Email}}" {{end}}{{end}} >
+			</input>
+			{{if .errors}}{{if .errors.email}}
+			<span class="error"> {{.errors.email}} </span>
+			{{end}}{{end}}
+		</label>
+	</p>
+	<p>
+		<label for="password">
+			Password
+			<input type="password" id="password" name="password">
+			</input>
+			{{if .errors}}{{if .errors.password}}
+			<span class="error"> {{.errors.password}} </span>
+			{{end}}{{end}}
+		</label>
+	</p>
+	<input type="hidden" id="csrf" name="csrf" value="{{.csrf}}"></input>
+	<input type="submit" value="login"></input>
+</form>
+{{template "footer"}}
+
+
