@@ -58,8 +58,7 @@ func (v *Views) LoggedOut(f View, to string) View {
 func (v *Views) LoggedIn(f View) View {
 	return func(c *Context) {
 		if c.u == nil {
-			c.rw.WriteHeader(401)
-			c.rw.Write([]byte("unauthorized"))
+			http.Redirect(c.rw, c.r, "/login", 302)
 		} else {
 			f(c)
 		}
