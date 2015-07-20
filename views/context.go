@@ -8,7 +8,6 @@ import (
 
 import (
     "github.com/julienschmidt/httprouter"
-	"github.com/gorilla/schema"
 )
 
 import (
@@ -23,7 +22,6 @@ type Context struct {
 	rw http.ResponseWriter
 	r *http.Request
 	p httprouter.Params
-	formDecoder *schema.Decoder
 }
 
 func (v *Views) Context(f View) httprouter.Handle {
@@ -38,7 +36,6 @@ func (v *Views) Context(f View) httprouter.Handle {
 		c := &Context{
 			views: v,
 			rw: rw, r: r, p: p,
-			formDecoder: schema.NewDecoder(),
 		}
 		c.Session(v.Log(f))
 	}

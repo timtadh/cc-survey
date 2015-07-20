@@ -31,7 +31,7 @@ func (c *Context) Form(v Validatable) (schema.MultiError, error) {
 		c.rw.Write([]byte("malformed form submitted"))
 		return nil, fmt.Errorf("could not process form")
 	}
-	err = c.formDecoder.Decode(v, c.r.PostForm)
+	err = c.views.decoder.Decode(v, c.r.PostForm)
 	if err != nil {
 		return err.(schema.MultiError), nil
 	}

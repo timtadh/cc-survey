@@ -3,7 +3,6 @@ package models
 
 import (
 	"crypto/subtle"
-	"encoding/json"
 	"fmt"
 	"golang.org/x/crypto/scrypt"
 	"log"
@@ -29,7 +28,7 @@ func Salt() []byte {
 }
 
 func HashPassword(password, salt []byte) (hash []byte, err error) {
-	N := 2 << (16 - 1)
+	N := 2 << (15 - 1)
 	r := 8
 	p := 1
 	hashLen := 32
@@ -89,17 +88,3 @@ func (u *User) VerifyPassword(attempt string) bool {
 	cmp := subtle.ConstantTimeCompare(u.Hash, ahash)
 	return cmp == 1
 }
-
-func (u *User) Json() []byte {
-	b, err := json.Marshal(&u)
-	if err != nil {
-		log.Panic(err)
-	}
-	return b
-}
-
-func (u *User) DecodeJson(bytes []byte) error {
-	return json.Unmarshal(bytes, &u)
-}
-
-

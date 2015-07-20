@@ -12,7 +12,8 @@ import (
 )
 
 import (
-    "github.com/julienschmidt/httprouter"
+	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/schema"
 )
 
 import (
@@ -29,6 +30,7 @@ type Views struct {
 	users models.UserStore
 	tmpl *template.Template
 	clones []*clones.Clone
+	decoder *schema.Decoder
 }
 
 type View func(*Context)
@@ -68,6 +70,7 @@ func Routes(assetPath, clonesPath string) http.Handler {
 		clonesPath: filepath.Clean(clonesPath),
 		sessions: mem.NewSessionMapStore("session"),
 		users: users,
+		decoder: schema.NewDecoder(),
 	}
 	mux.GET("/", v.Context(v.Index))
 	mux.GET("/logout", v.Context(v.LoggedOut(v.Logout, "/")))

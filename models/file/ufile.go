@@ -1,6 +1,7 @@
 package file
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -86,7 +87,7 @@ func (s *UserFileStore) Get(email string) (u *models.User, err error) {
 	defer s.lock.RUnlock()
 	err = s.users.DoFind([]byte(email), func(_, bytes []byte) error {
 		u = &models.User{}
-		return u.DecodeJson(bytes)
+		return json.Unmarshal(bytes, &u)
 	})
 	if err != nil {
 		return nil, err
@@ -100,7 +101,11 @@ func (s *UserFileStore) Get(email string) (u *models.User, err error) {
 func (s *UserFileStore) Add(u *models.User) (err error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	return s.add(u.Email, u.Json())
+	b, err := json.Marshal(&u)
+	if err != nil {
+		return err
+	}
+	return s.add(u.Email, b)
 }
 
 func (s *UserFileStore) add(email string, user []byte) (err error) {
@@ -127,7 +132,11 @@ func (s *UserFileStore) Update(u *models.User) (err error) {
 	if err != nil {
 		return err
 	}
-	return s.add(u.Email, u.Json())
+	b, err := json.Marshal(&u)
+	if err != nil {
+		return err
+	}
+	return s.add(u.Email, b)
 }
 
 

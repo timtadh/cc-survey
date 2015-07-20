@@ -122,7 +122,7 @@ func (s *Session) Csrf(obj string) string {
 	h := crypto.SHA512.New()
 	h.Write([]byte(obj))
 	h.Write([]byte(s.CsrfKey))
-	for i := 0; i < 250; i++ {
+	for i := 0; i < 100; i++ {
 		h.Write(h.Sum(nil))
 	}
 	return base64.URLEncoding.EncodeToString(h.Sum(nil))

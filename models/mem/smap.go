@@ -22,7 +22,7 @@ type SessionMapStore struct {
 func NewSessionMapStore(name string) *SessionMapStore {
 	return &SessionMapStore{
 		name: name,
-		store: make(map[string]*models.Session),
+		store: make(map[string]*models.Session, 1000),
 	}
 }
 
