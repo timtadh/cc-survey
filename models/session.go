@@ -1,6 +1,7 @@
 package models
 
 import (
+	"crypto"
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
@@ -12,9 +13,6 @@ import (
 	"time"
 )
 
-import (
-    "github.com/julienschmidt/httprouter"
-)
 
 type Session struct {
 	key uint64
@@ -31,7 +29,6 @@ type SessionStore interface {
 	Get(key uint64) (*Session, error)
 	Update(*Session) (error)
 	Invalidate(key uint64) (error)
-	Session(f func(*Session)httprouter.Handle) httprouter.Handle
 }
 
 func randBytes(length int) []byte {
@@ -76,7 +73,7 @@ func key(name string, r *http.Request) (uint64, error) {
 	return 0, fmt.Errorf("Failed to extract session key")
 }
 
-func Get(store SessionStore, rw http.ResponseWriter, r *http.Request) (s *Session, err error) {
+func GetSession(store SessionStore, rw http.ResponseWriter, r *http.Request) (s *Session, err error) {
 	name := store.Name()
 	k, err := key(name, r)
 	if err != nil {
@@ -106,7 +103,7 @@ func Get(store SessionStore, rw http.ResponseWriter, r *http.Request) (s *Sessio
 func newSession(r *http.Request) *Session {
 	return &Session{
 		key: randUint64(),
-		csrf: randBytes(32),
+		csrf: randBytes(64),
 		addr: ip(r),
 		usrAgent: userAgent(r),
 		created: time.Now().UTC(),
@@ -122,6 +119,7 @@ func (s *Session) Copy() *Session {
 		usrAgent: s.usrAgent,
 		created: s.created,
 		accessed: s.accessed,
+		user: s.user,
 	}
 }
 
@@ -133,12 +131,19 @@ func (s *Session) User() string {
 	return s.user
 }
 
+func (s *Session) SetUser(store SessionStore, email string) error {
+	s.user = email
+	return store.Update(s)
+}
+
 func (s *Session) Csrf(obj string) string {
-	key, err := HashPassword([]byte(obj), s.csrf)
-	if err != nil {
-		log.Panic(err)
+	h := crypto.SHA512.New()
+	h.Write([]byte(obj))
+	h.Write([]byte(s.csrf))
+	for i := 0; i < 250; i++ {
+		h.Write(h.Sum(nil))
 	}
-	return base64.URLEncoding.EncodeToString(key)
+	return base64.URLEncoding.EncodeToString(h.Sum(nil))
 }
 
 func (s *Session) ValidCsrf(obj, token string) bool {

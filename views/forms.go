@@ -35,10 +35,6 @@ func (c *Context) Form(v Validatable) (schema.MultiError, error) {
 	if err != nil {
 		return err.(schema.MultiError), nil
 	}
-	errs := v.Validate(c)
-	if len(errs) > 0 {
-		return errs, nil
-	}
-	return nil, nil
+	return v.Validate(c), nil
 }
 

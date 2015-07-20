@@ -13,7 +13,6 @@ import (
 
 import (
     "github.com/julienschmidt/httprouter"
-	"github.com/gorilla/schema"
 )
 
 import (
@@ -30,15 +29,6 @@ type Views struct {
 	users models.UserStore
 	tmpl *template.Template
 	clones []*clones.Clone
-}
-
-type Context struct {
-	s *models.Session
-	u *models.User
-	rw http.ResponseWriter
-	r *http.Request
-	p httprouter.Params
-	formDecoder *schema.Decoder
 }
 
 type View func(*Context)
@@ -80,10 +70,12 @@ func Routes(assetPath, clonesPath string) http.Handler {
 		users: users,
 	}
 	mux.GET("/", v.Context(v.Index))
-	mux.GET("/register", v.Context(v.Register))
-	mux.POST("/register", v.Context(v.DoRegister))
-	mux.GET("/login", v.Context(v.Login))
-	mux.POST("/login", v.Context(v.DoLogin))
+	mux.GET("/logout", v.Context(v.LoggedOut(v.Logout, "/")))
+	mux.GET("/register", v.Context(v.LoggedInRedirect(v.Register, "/main")))
+	mux.POST("/register", v.Context(v.LoggedInRedirect(v.DoRegister, "/main")))
+	mux.GET("/login", v.Context(v.LoggedInRedirect(v.Login, "/main")))
+	mux.POST("/login", v.Context(v.LoggedInRedirect(v.DoLogin, "/main")))
+	mux.GET("/main", v.Context(v.LoggedIn(v.Main)))
 	
 	v.Init()
 	return mux
@@ -92,18 +84,6 @@ func Routes(assetPath, clonesPath string) http.Handler {
 func (v *Views) Init() {
 	v.loadTemplates()
 	v.loadClones()
-}
-
-func (v *Views) Context(f func(c *Context)) httprouter.Handle {
-	return v.sessions.Session(func(s *models.Session) httprouter.Handle { 
-		return func(rw http.ResponseWriter, r *http.Request, p httprouter.Params) {
-			c := &Context{
-				s: s, rw: rw, r: r, p: p,
-				formDecoder: schema.NewDecoder(),
-			}
-			v.Log(f)(c)
-		}
-	})
 }
 
 func (v *Views) loadClones() {

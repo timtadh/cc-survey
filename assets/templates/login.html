@@ -1,6 +1,11 @@
 {{template "header"}}
 <h1>Login</h1>
 <form action="{{.target}}" method="post">
+	{{if .errors}}{{if .errors.login}}
+	<p>
+		<span class="error"> {{.errors.login}} </span>
+	</p>
+	{{end}}{{end}}
 	<p>
 		<label for="email">
 			Email:

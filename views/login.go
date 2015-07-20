@@ -3,13 +3,21 @@ package views
 import (
 	"fmt"
 	"log"
+	"net/http"
 )
 
 import (
 	"github.com/gorilla/schema"
 )
 
+import (
+	"github.com/timtadh/cc-survey/models"
+)
 
+
+func (v *Views) Logout(c *Context) {
+	http.Redirect(c.rw, c.r, "/", 302)
+}
 
 func (v *Views) Login(c *Context) {
 	err := v.tmpl.ExecuteTemplate(c.rw, "login", map[string]interface{}{
@@ -45,7 +53,22 @@ func (v *Views) DoLogin(c *Context) {
 		return
 	}
 	log.Println(l)
-	c.rw.Write([]byte("would now do login"))
+	u, err := models.Login(c.views.users, l.Email, l.Password)
+	if err != nil {
+		log.Println(err)
+		ferr["login"] = fmt.Errorf("could not log on to the system. try again?")
+		v.ErrorLogin(c, l, ferr)
+		return
+	} else {
+		err := c.SetUser(u)
+		if err != nil {
+			log.Println(err)
+			ferr["login"] = fmt.Errorf("could not log on to the system. try again?")
+			v.ErrorLogin(c, l, ferr)
+			return
+		}
+	}
+	http.Redirect(c.rw, c.r, "/main", 302)
 }
 
 type LoginForm struct {
@@ -59,8 +82,8 @@ func (l *LoginForm) Validate(c *Context) schema.MultiError {
 	if l.Email == "" {
 		errors["email"] = fmt.Errorf("must have an email")
 	}
-	if len(l.Password) < 5 {
-		errors["password"] = fmt.Errorf("must have a password greater than 5 characters")
+	if len(l.Password) < 1 {
+		errors["password"] = fmt.Errorf("must have a password")
 	}
 	return errors
 }

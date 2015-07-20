@@ -45,7 +45,7 @@ func Login(store UserStore, email, password string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
-	if u.VerifyPassword(password) {
+	if !u.VerifyPassword(password) {
 		return nil, fmt.Errorf("password invalid")
 	}
 	return u, nil
@@ -90,7 +90,8 @@ func (u *User) VerifyPassword(attempt string) bool {
 		log.Println(err)
 		return false
 	}
-	return subtle.ConstantTimeCompare(u.hash, ahash) == 1
+	cmp := subtle.ConstantTimeCompare(u.hash, ahash)
+	return cmp == 1
 }
 
 type uJ struct {

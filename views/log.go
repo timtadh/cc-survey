@@ -36,8 +36,8 @@ func (v *Views) Log(f View) View {
 		s := time.Now()
 		f(c)
 		e := time.Now()
-		log.Printf("%v %v (%v) %v (%d) %v",
-			c.r.RemoteAddr, c.r.URL, c.r.ContentLength, c.s.Key(), lrw.total, e.Sub(s))
+		log.Printf("%v %-4v %v (%v) %v (%d) %v",
+			c.r.RemoteAddr, c.r.Method, c.r.URL, c.r.ContentLength, c.s.Key(), lrw.total, e.Sub(s))
 	}
 }
 

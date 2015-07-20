@@ -84,12 +84,15 @@ func (s *UserFileStore) has(email string) bool {
 func (s *UserFileStore) Get(email string) (u *models.User, err error) {
 	s.lock.RLock()
 	defer s.lock.RUnlock()
-	u = &models.User{}
 	err = s.users.DoFind([]byte(email), func(_, bytes []byte) error {
+		u = &models.User{}
 		return u.DecodeJson(bytes)
 	})
 	if err != nil {
 		return nil, err
+	}
+	if u == nil {
+		return nil, fmt.Errorf("User not found")
 	}
 	return u, nil
 }

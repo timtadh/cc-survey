@@ -1,6 +1,12 @@
 {{template "header"}}
 <h1>Register</h1>
 <form action="{{.target}}" method="post">
+	{{if .errors}}{{if .errors.register}}
+	<p>
+		<span class="error"> {{.errors.register}} </span>
+	</p>
+	{{end}}{{end}}
+	<p>
 	<p>
 		<label for="email">
 			Email:
@@ -22,24 +28,28 @@
 		</label>
 	</p>
 	<p>
-		<label for="password-confirm">
+		<label for="confirm_password">
 			Confirm Password:
-			<input type="password" id="password-confirm" name="password-confirm">
+			<input type="password" id="confirm_password" name="confirm_password">
 			</input>
-			{{if .errors}}{{if .errors.password_confirm}}
-			<span class="error"> {{.errors.password_confirm}} </span>
+			{{if .errors}}{{if .errors.confirm_password}}
+			<span class="error"> {{.errors.confirm_password}} </span>
 			{{end}}{{end}}
 		</label>
 	</p>
+	{{if .errors}}{{if .errors.consent}}
+	<p>
+		<span class="error"> {{.errors.consent}} </span>
+	</p>
+	{{end}}{{end}}
 	<p>
 		<label for="consent">
-			<input type="checkbox" id="consent" name="consent" value="iagree">
+			<input type="checkbox" id="consent" name="consent" value="iagree" 
+				{{if .form}} {{if eq .form.Consent "iagree"}} checked="true" {{end}} {{end}}
+			>
 			I understand that (only) aggregate and anonymize answers to this survey may
 			be shared with management or the general public.
 			</input>
-			{{if .errors}}{{if .errors.consent}}
-			<span class="error"> {{.errors.consent}} </span>
-			{{end}}{{end}}
 		</label>
 	</p>
 	<input type="hidden" id="csrf" name="csrf" value="{{.csrf}}"></input>
