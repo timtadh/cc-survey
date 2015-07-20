@@ -107,15 +107,8 @@ func newSession(r *http.Request) *Session {
 }
 
 func (s *Session) Copy() *Session {
-	return &Session{
-		Key: s.Key,
-		CsrfKey: s.CsrfKey,
-		Addr: s.Addr,
-		UsrAgent: s.UsrAgent,
-		Created: s.Created,
-		Accessed: s.Accessed,
-		User: s.User,
-	}
+	c := *s
+	return &c
 }
 
 func (s *Session) Csrf(obj string) string {
