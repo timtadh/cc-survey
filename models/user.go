@@ -11,9 +11,9 @@ import (
 
 
 type User struct {
-	email string
-	hash []byte
-	salt []byte
+	Email string
+	Hash []byte
+	Salt []byte
 }
 
 type UserStore interface {
@@ -73,40 +73,25 @@ func newUser(email, password string) (*User, error) {
 		return nil, err
 	}
 	u := &User{
-		email: email,
-		hash: hash,
-		salt: salt,
+		Email: email,
+		Hash: hash,
+		Salt: salt,
 	}
 	return u, nil
 }
 
-func (u *User) Email() string {
-	return u.email
-}
-
 func (u *User) VerifyPassword(attempt string) bool {
-	ahash, err := HashPassword([]byte(attempt), u.salt)
+	ahash, err := HashPassword([]byte(attempt), u.Salt)
 	if err != nil {
 		log.Println(err)
 		return false
 	}
-	cmp := subtle.ConstantTimeCompare(u.hash, ahash)
+	cmp := subtle.ConstantTimeCompare(u.Hash, ahash)
 	return cmp == 1
 }
 
-type uJ struct {
-	Email string `json:"email"`
-	Hash []byte `json:"hash"`
-	Salt []byte `json:"salt"`
-}
-
 func (u *User) Json() []byte {
-	var j uJ = uJ{
-		Email: u.email,
-		Hash: u.hash,
-		Salt: u.salt,
-	}
-	b, err := json.Marshal(&j)
+	b, err := json.Marshal(&u)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -114,15 +99,7 @@ func (u *User) Json() []byte {
 }
 
 func (u *User) DecodeJson(bytes []byte) error {
-	var j uJ
-	err := json.Unmarshal(bytes, &j)
-	if err != nil {
-		return err
-	}
-	u.email = j.Email
-	u.hash = j.Hash
-	u.salt = j.Salt
-	return nil
+	return json.Unmarshal(bytes, &u)
 }
 
 

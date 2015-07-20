@@ -4,31 +4,31 @@ import (
 	"crypto"
 	"encoding/base64"
 	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
 
 
 type Session struct {
-	key uint64
-	csrf []byte
-	addr string
-	usrAgent string
-	created time.Time
-	accessed time.Time
-	user string
+	Key string
+	CsrfKey []byte
+	Addr string
+	UsrAgent string
+	Created time.Time
+	Accessed time.Time
+	User string
 }
 
 type SessionStore interface {
 	Name() string
-	Get(key uint64) (*Session, error)
+	Get(key string) (*Session, error)
 	Update(*Session) (error)
-	Invalidate(key uint64) (error)
+	Invalidate(*Session) (error)
 }
 
 func randBytes(length int) []byte {
@@ -61,16 +61,12 @@ func ip(r *http.Request) string {
 	return strings.SplitN(r.RemoteAddr, ":", 2)[0]
 }
 
-func key(name string, r *http.Request) (uint64, error) {
+func key(name string, r *http.Request) (string, error) {
 	c, err := r.Cookie(name)
 	if err == nil {
-		n, err := strconv.ParseUint(c.Value, 10, 64)
-		if err != nil {
-			return 0, err
-		}
-		return n, nil
+		return c.Value, nil
 	}
-	return 0, fmt.Errorf("Failed to extract session key")
+	return "", fmt.Errorf("Failed to extract session key")
 }
 
 func GetSession(store SessionStore, rw http.ResponseWriter, r *http.Request) (s *Session, err error) {
@@ -81,7 +77,6 @@ func GetSession(store SessionStore, rw http.ResponseWriter, r *http.Request) (s 
 	} else {
 		s, err = store.Get(k)
 		if err != nil {
-			log.Println(err)
 			s = newSession(r)
 		} else {
 			err := s.update(name, r)
@@ -102,44 +97,31 @@ func GetSession(store SessionStore, rw http.ResponseWriter, r *http.Request) (s 
 
 func newSession(r *http.Request) *Session {
 	return &Session{
-		key: randUint64(),
-		csrf: randBytes(64),
-		addr: ip(r),
-		usrAgent: userAgent(r),
-		created: time.Now().UTC(),
-		accessed: time.Now().UTC(),
+		Key: hex.EncodeToString(randBytes(16)),
+		CsrfKey: randBytes(64),
+		Addr: ip(r),
+		UsrAgent: userAgent(r),
+		Created: time.Now().UTC(),
+		Accessed: time.Now().UTC(),
 	}
 }
 
 func (s *Session) Copy() *Session {
 	return &Session{
-		key: s.key,
-		csrf: s.csrf,
-		addr: s.addr,
-		usrAgent: s.usrAgent,
-		created: s.created,
-		accessed: s.accessed,
-		user: s.user,
+		Key: s.Key,
+		CsrfKey: s.CsrfKey,
+		Addr: s.Addr,
+		UsrAgent: s.UsrAgent,
+		Created: s.Created,
+		Accessed: s.Accessed,
+		User: s.User,
 	}
-}
-
-func (s *Session) Key() uint64 {
-	return s.key
-}
-
-func (s *Session) User() string {
-	return s.user
-}
-
-func (s *Session) SetUser(store SessionStore, email string) error {
-	s.user = email
-	return store.Update(s)
 }
 
 func (s *Session) Csrf(obj string) string {
 	h := crypto.SHA512.New()
 	h.Write([]byte(obj))
-	h.Write([]byte(s.csrf))
+	h.Write([]byte(s.CsrfKey))
 	for i := 0; i < 250; i++ {
 		h.Write(h.Sum(nil))
 	}
@@ -152,7 +134,7 @@ func (s *Session) ValidCsrf(obj, token string) bool {
 
 func (s *Session) Invalidate(store SessionStore, rw http.ResponseWriter) error {
 	delete(rw.Header(), store.Name())
-	return store.Invalidate(s.key)
+	return store.Invalidate(s)
 }
 
 func (s *Session) valid(name string, r *http.Request) bool {
@@ -162,23 +144,22 @@ func (s *Session) valid(name string, r *http.Request) bool {
 	}
 	ua := userAgent(r)
 	addr := ip(r)
-	return ua == s.usrAgent && addr == s.addr && k == s.key
+	return ua == s.UsrAgent && addr == s.Addr && k == s.Key
 }
 
 func (s *Session) update(name string, r *http.Request) error {
 	if s.valid(name, r) {
-		s.accessed = time.Now().UTC()
+		s.Accessed = time.Now().UTC()
 		return nil
 	}
 	return fmt.Errorf("session was invalid")
 }
 
 func (s *Session) write(name string, rw http.ResponseWriter, r *http.Request) {
-	v := strconv.FormatUint(s.key, 10)
 	secure := r.URL.Scheme == "https" || r.TLS != nil
 	http.SetCookie(rw, &http.Cookie{
 		Name: name,
-		Value: v,
+		Value: s.Key,
 		Path: "/",
 		Secure: secure,
 		HttpOnly: true,

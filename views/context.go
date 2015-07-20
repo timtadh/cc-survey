@@ -47,7 +47,10 @@ func (v *Views) Context(f View) httprouter.Handle {
 func (v *Views) LoggedOut(f View, to string) View {
 	return func(c *Context) {
 		if c.u != nil {
-			v.sessions.Invalidate(c.s.Key())
+			err := c.s.Invalidate(v.sessions, c.rw)
+			if err != nil {
+				log.Println(err)
+			}
 			http.Redirect(c.rw, c.r, to, 302)
 		} else {
 			f(c)
@@ -87,8 +90,8 @@ func (c *Context) Session(f View) {
 		doErr(c, err)
 	}
 	c.s = s
-	if s.User() != "" {
-		u, err := c.views.users.Get(s.User())
+	if s.User != "" {
+		u, err := c.views.users.Get(s.User)
 		if err != nil {
 			doErr(c, err)
 		}
@@ -99,6 +102,7 @@ func (c *Context) Session(f View) {
 
 func (c *Context) SetUser(u *models.User) error {
 	c.u = u
-	return c.s.SetUser(c.views.sessions, u.Email())
+	c.s.User = u.Email
+	return c.views.sessions.Update(c.s)
 }
 

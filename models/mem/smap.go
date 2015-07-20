@@ -16,13 +16,13 @@ import (
 type SessionMapStore struct {
 	lock sync.Mutex
 	name string
-	store map[uint64]*models.Session
+	store map[string]*models.Session
 }
 
 func NewSessionMapStore(name string) *SessionMapStore {
 	return &SessionMapStore{
 		name: name,
-		store: make(map[uint64]*models.Session),
+		store: make(map[string]*models.Session),
 	}
 }
 
@@ -30,7 +30,7 @@ func (m *SessionMapStore) Name() string {
 	return m.name
 }
 
-func (m *SessionMapStore) Get(key uint64) (*models.Session, error) {
+func (m *SessionMapStore) Get(key string) (*models.Session, error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	if s, has := m.store[key]; has {
@@ -39,10 +39,10 @@ func (m *SessionMapStore) Get(key uint64) (*models.Session, error) {
 	return nil, fmt.Errorf("Session not in store")
 }
 
-func (m *SessionMapStore) Invalidate(key uint64) error {
+func (m *SessionMapStore) Invalidate(s *models.Session) error {
 	m.lock.Lock()
 	defer m.lock.Unlock()
-	delete(m.store, key)
+	delete(m.store, s.Key)
 	return nil
 }
 
@@ -52,7 +52,7 @@ func (m *SessionMapStore) Update(s *models.Session) error {
 	if s == nil {
 		return fmt.Errorf("passed in a nil session")
 	}
-	m.store[s.Key()] = s.Copy()
+	m.store[s.Key] = s.Copy()
 	return nil
 }
 

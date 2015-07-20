@@ -52,7 +52,6 @@ func (v *Views) DoLogin(c *Context) {
 		v.ErrorLogin(c, l, ferr)
 		return
 	}
-	log.Println(l)
 	u, err := models.Login(c.views.users, l.Email, l.Password)
 	if err != nil {
 		log.Println(err)

@@ -100,7 +100,7 @@ func (s *UserFileStore) Get(email string) (u *models.User, err error) {
 func (s *UserFileStore) Add(u *models.User) (err error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	return s.add(u.Email(), u.Json())
+	return s.add(u.Email, u.Json())
 }
 
 func (s *UserFileStore) add(email string, user []byte) (err error) {
@@ -113,7 +113,7 @@ func (s *UserFileStore) add(email string, user []byte) (err error) {
 func (s *UserFileStore) Remove(u *models.User) (err error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	return s.remove(u.Email())
+	return s.remove(u.Email)
 }
 
 func (s *UserFileStore) remove(email string) (err error) {
@@ -123,11 +123,11 @@ func (s *UserFileStore) remove(email string) (err error) {
 func (s *UserFileStore) Update(u *models.User) (err error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	err = s.remove(u.Email())
+	err = s.remove(u.Email)
 	if err != nil {
 		return err
 	}
-	return s.add(u.Email(), u.Json())
+	return s.add(u.Email, u.Json())
 }
 
 
