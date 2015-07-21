@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"sync"
 )
@@ -30,31 +29,26 @@ func GetUserStore(dir string) (*UserFileStore, error) {
 	var bf *fmap.BlockFile
 	var users *bptree.BpTree
 	path := filepath.Join(dir, "users.bptree")
-	fi, err := os.Stat(path)
-	if err != nil && os.IsNotExist(err) {
-		// ok the file does not exist
-		bf, err = fmap.CreateBlockFile(path)
-		if err != nil {
-			return nil, err
-		}
-		users, err = bptree.New(bf, -1, -1)
-		if err != nil {
-			return nil, err
-		}
-	} else if err != nil {
+	err := createOrOpen(path,
+		func(path string) (err error) {
+			bf, err = fmap.CreateBlockFile(path)
+			if err != nil {
+				return err
+			}
+			users, err = bptree.New(bf, -1, -1)
+			return err
+		},
+		func(path string) (err error) {
+			bf, err = fmap.OpenBlockFile(path)
+			if err != nil {
+				return err
+			}
+			users, err = bptree.Open(bf)
+			return err
+		},
+	)
+	if err != nil {
 		return nil, err
-	} else if fi.IsDir() {
-		return nil, fmt.Errorf("%v is a directory", path)
-	} else {
-		// ok the file is a normal file
-		bf, err = fmap.OpenBlockFile(path)
-		if err != nil {
-			return nil, err
-		}
-		users, err = bptree.Open(bf)
-		if err != nil {
-			return nil, err
-		}
 	}
 	s := &UserFileStore{
 		path: path,

@@ -13,3 +13,6 @@
 [submodule "src/github.com/gorilla/schema"]
 	path = src/github.com/gorilla/schema
 	url = git@github.com:gorilla/schema
+[submodule "src/github.com/timtadh/data-structures"]
+	path = src/github.com/timtadh/data-structures
+	url = git@github.com:timtadh/data-structures
