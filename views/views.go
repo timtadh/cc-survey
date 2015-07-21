@@ -74,11 +74,11 @@ func Routes(assetPath, clonesPath string) http.Handler {
 	}
 	mux.GET("/", v.Context(v.Index))
 	mux.GET("/logout", v.Context(v.LoggedOut(v.Logout, "/")))
-	mux.GET("/register", v.Context(v.LoggedInRedirect(v.Register, "/main")))
-	mux.POST("/register", v.Context(v.LoggedInRedirect(v.DoRegister, "/main")))
-	mux.GET("/login", v.Context(v.LoggedInRedirect(v.Login, "/main")))
-	mux.POST("/login", v.Context(v.LoggedInRedirect(v.DoLogin, "/main")))
-	mux.GET("/main", v.Context(v.LoggedIn(v.Main)))
+	mux.GET("/register", v.Context(v.LoggedInRedirect(v.Register, "/overview")))
+	mux.POST("/register", v.Context(v.LoggedInRedirect(v.DoRegister, "/overview")))
+	mux.GET("/login", v.Context(v.LoggedInRedirect(v.Login, "/overview")))
+	mux.POST("/login", v.Context(v.LoggedInRedirect(v.DoLogin, "/overview")))
+	mux.GET("/overview", v.Context(v.LoggedIn(v.Overview)))
 	
 	v.Init()
 	return mux

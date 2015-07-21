@@ -67,7 +67,7 @@ func (v *Views) DoLogin(c *Context) {
 			return
 		}
 	}
-	http.Redirect(c.rw, c.r, "/main", 302)
+	http.Redirect(c.rw, c.r, "/overview", 302)
 }
 
 type LoginForm struct {
