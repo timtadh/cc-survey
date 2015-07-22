@@ -81,6 +81,7 @@ func Routes(assetPath, clonesPath string) http.Handler {
 	mux.POST("/login", v.Context(v.LoggedInRedirect(v.DoLogin, "/survey")))
 	mux.GET("/survey", v.Context(v.LoggedIn(v.Survey)))
 	mux.GET("/survey/:clone", v.Context(v.LoggedIn(v.SurveyQuestion)))
+	mux.POST("/survey/:clone", v.Context(v.LoggedIn(v.DoSurveyQuestion)))
 	
 	v.Init()
 	return mux

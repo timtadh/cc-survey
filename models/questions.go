@@ -2,8 +2,14 @@ package models
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"log"
+	"net/http"
+)
+
+import (
+	"github.com/gorilla/schema"
 )
 
 
@@ -68,6 +74,81 @@ var formTmpl = template.Must(template.New("form").Parse(
 </form>`))
 
 
+func (f *Form) Decode(u *User, cid int, r *http.Request) (*SurveyAnswer, schema.MultiError, error) {
+	err := r.ParseForm()
+	if err != nil {
+		return nil, nil, err
+	}
+	answer := &SurveyAnswer{
+		UserEmail: u.Email,
+		CloneID: cid,
+		Responses: make([]Response, 0, len(f.Questions)),
+	}
+	errors := make(schema.MultiError)
+	form := r.PostForm
+	for qid, r := range f.Questions {
+		switch q := r.(type) {
+		case *MultipleChoice:
+			if value, has := form[q.Name]; !has && q.Required {
+				errors[q.Name] = fmt.Errorf("This is a required question")
+				answer.Responses = append(answer.Responses, Response{
+					QuestionID: qid,
+					Answer: -1,
+					Text: "Not Answered",
+				})
+			} else if !has {
+				answer.Responses = append(answer.Responses, Response{
+					QuestionID: qid,
+					Answer: -1,
+					Text: "Not Answered",
+				})
+			} else {
+				aid, err := q.AnswerNumber(value[0])
+				if err != nil {
+					errors[q.Name] = err
+					answer.Responses = append(answer.Responses, Response{
+						QuestionID: qid,
+						Answer: -2,
+						Text: "Bad Answer",
+					})
+				} else {
+					answer.Responses = append(answer.Responses, Response{
+						QuestionID: qid,
+						Answer: aid,
+						Text: value[0],
+					})
+				}
+			}
+		case *FreeResponse:
+			value, has := form[q.Name]
+			has = has && value[0] != ""
+			if !has && q.Required {
+				errors[q.Name] = fmt.Errorf("This is a required question")
+				answer.Responses = append(answer.Responses, Response{
+					QuestionID: qid,
+					Answer: -1,
+					Text: "Not Answered",
+				})
+			} else if !has {
+				answer.Responses = append(answer.Responses, Response{
+					QuestionID: qid,
+					Answer: -1,
+					Text: "Not Answered",
+				})
+			} else {
+				answer.Responses = append(answer.Responses, Response{
+					QuestionID: qid,
+					Answer: -3,
+					Text: value[0],
+				})
+			}
+		default:
+			log.Panic(fmt.Errorf("unexpected question type"))
+		}
+	}
+	return answer, errors, nil
+}
+
 func (f *Form) HTML() template.HTML {
 	return HTML(formTmpl, f)
 }
@@ -78,6 +159,15 @@ func (q *FreeResponse) HTML() template.HTML {
 
 func (q *MultipleChoice) HTML() template.HTML {
 	return HTML(multiTmpl, q)
+}
+
+func (q *MultipleChoice) AnswerNumber(key string) (int, error) {
+	for aid, a := range q.Answers {
+		if key == a.Value {
+			return aid, nil
+		}
+	}
+	return -1, fmt.Errorf("Not a valid answer")
 }
 
 func HTML(t *template.Template, data interface{}) template.HTML {

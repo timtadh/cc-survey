@@ -132,8 +132,14 @@ func (st *SurveyLogStore) loadLine(line []byte, answers *[]*models.SurveyAnswer,
 }
 
 func (st *SurveyLogStore) save(answersCount int, s *models.Survey) error {
-	f, err := os.OpenFile(st.answersPath, os.O_APPEND|os.O_SYNC, 0)
-	if err != nil {
+	f, err := os.OpenFile(st.answersPath, os.O_WRONLY|os.O_APPEND|os.O_SYNC, 0660)
+	if err != nil && os.IsNotExist(err) {
+		f, err = os.OpenFile(st.answersPath, os.O_WRONLY|os.O_APPEND|os.O_CREATE|os.O_SYNC, 0660)
+		if err != nil {
+			return err
+		}
+		answersCount = 0
+	} else if err != nil {
 		return err
 	}
 	defer f.Close()
@@ -149,13 +155,13 @@ func (st *SurveyLogStore) save(answersCount int, s *models.Survey) error {
 }
 
 func (st *SurveyLogStore) saveFile(f io.Writer, answersCount int, s *models.Survey) error {
-	enc := json.NewEncoder(f)
 	for i := answersCount; i < len(s.Answers); i++ {
-		err := enc.Encode(&s.Answers[i])
+		bytes, err := json.Marshal(&s.Answers[i])
 		if err != nil {
 			return err
 		}
-		_, err = f.Write([]byte("\n"))
+		bytes = append(bytes, []byte("\n")...)
+		_, err = f.Write(bytes)
 		if err != nil {
 			return err
 		}

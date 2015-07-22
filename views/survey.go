@@ -17,7 +17,9 @@ func (v *Views) Survey(c *Context) {
 	var next string
 	err := v.survey.Do(func (s *models.Survey) error {
 		cid, _ := s.Next()
-		next = fmt.Sprintf("/survey/%d", cid)
+		if cid >= 0 {
+			next = fmt.Sprintf("/survey/%d", cid)
+		}
 		return nil
 	})
 	if err != nil {
@@ -35,5 +37,4 @@ func (v *Views) Survey(c *Context) {
 		log.Panic(err)
 	}
 }
-
 
