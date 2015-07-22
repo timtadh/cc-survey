@@ -28,6 +28,7 @@ type Views struct {
 	clonesPath string
 	sessions models.SessionStore
 	users models.UserStore
+	survey models.SurveyStore
 	tmpl *template.Template
 	clones []*clones.Clone
 	decoder *schema.Decoder
@@ -74,11 +75,12 @@ func Routes(assetPath, clonesPath string) http.Handler {
 	}
 	mux.GET("/", v.Context(v.Index))
 	mux.GET("/logout", v.Context(v.LoggedOut(v.Logout, "/")))
-	mux.GET("/register", v.Context(v.LoggedInRedirect(v.Register, "/overview")))
-	mux.POST("/register", v.Context(v.LoggedInRedirect(v.DoRegister, "/overview")))
-	mux.GET("/login", v.Context(v.LoggedInRedirect(v.Login, "/overview")))
-	mux.POST("/login", v.Context(v.LoggedInRedirect(v.DoLogin, "/overview")))
-	mux.GET("/overview", v.Context(v.LoggedIn(v.Overview)))
+	mux.GET("/register", v.Context(v.LoggedInRedirect(v.Register, "/survey")))
+	mux.POST("/register", v.Context(v.LoggedInRedirect(v.DoRegister, "/survey")))
+	mux.GET("/login", v.Context(v.LoggedInRedirect(v.Login, "/survey")))
+	mux.POST("/login", v.Context(v.LoggedInRedirect(v.DoLogin, "/survey")))
+	mux.GET("/survey", v.Context(v.LoggedIn(v.Survey)))
+	mux.GET("/survey/:clone", v.Context(v.LoggedIn(v.SurveyQuestion)))
 	
 	v.Init()
 	return mux
@@ -87,6 +89,11 @@ func Routes(assetPath, clonesPath string) http.Handler {
 func (v *Views) Init() {
 	v.loadTemplates()
 	v.loadClones()
+	var err error
+	v.survey, err = file.NewSurveyStore(v.clonesPath, Questions, v.clones)
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func (v *Views) loadClones() {

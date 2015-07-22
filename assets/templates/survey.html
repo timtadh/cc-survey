@@ -4,7 +4,6 @@
 <p>Total Number of Groups: {{ .clone_count }}</p>
 <p>Total Number of Groups Reviewed: </p>
 <p>Number of Groups You Have Reviewed: </p>
-<p><a href="/next">Review a Group of Duplicates</a></p>
+<p><a href="{{.next}}">Review a Group of Duplicates</a></p>
 <p><a href="/logout">logout</a></p>
-{{.Form}}
 {{template "footer"}}
