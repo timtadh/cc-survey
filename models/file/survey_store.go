@@ -22,6 +22,12 @@ type SurveyLogStore struct {
 	clones []*clones.Clone
 	cloneIdxs *set.SortedSet
 	answersPath string
+	cache *surveyCache
+}
+
+type surveyCache struct {
+	survey *models.Survey
+	answerCount int
 }
 
 func NewSurveyStore(dir string, questions []models.Renderable, clones []*clones.Clone) (*SurveyLogStore, error) {
@@ -62,6 +68,9 @@ func (st *SurveyLogStore) Do(f func(*models.Survey) error) error {
 }
 
 func (st *SurveyLogStore) load() (int, *models.Survey, error) {
+	if st.cache != nil {
+		return st.cache.answerCount, st.cache.survey, nil
+	}
 	answers := make([]*models.SurveyAnswer, 0, len(st.clones)*2)
 	answered := set.NewSortedSet(len(st.clones))
 	err := createOrOpen(st.answersPath,
@@ -91,6 +100,10 @@ func (st *SurveyLogStore) load() (int, *models.Survey, error) {
 		Clones: st.clones,
 		Unanswered: unanswered,
 		Answers: answers,
+	}
+	st.cache = &surveyCache{
+		survey: s,
+		answerCount: len(answers),
 	}
 	return len(answers), s, nil
 }
@@ -124,7 +137,15 @@ func (st *SurveyLogStore) save(answersCount int, s *models.Survey) error {
 		return err
 	}
 	defer f.Close()
-	return st.saveFile(f, answersCount, s)
+	err = st.saveFile(f, answersCount, s)
+	if err != nil {
+		return err
+	}
+	st.cache = &surveyCache{
+		survey: s,
+		answerCount: len(s.Answers),
+	}
+	return nil
 }
 
 func (st *SurveyLogStore) saveFile(f io.Writer, answersCount int, s *models.Survey) error {
