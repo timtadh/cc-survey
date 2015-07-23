@@ -4,14 +4,16 @@ import (
 	"bytes"
 	"io/ioutil"
 	"fmt"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
+	"time"
 )
 
 type Clone struct {
 	dir string
 	pr float64
-	img []byte
 	Pattern *Subgraph
 	Instances []*Subgraph
 }
@@ -75,5 +77,51 @@ func (c *Clone) loadPattern() (*Subgraph, error) {
 func (c *Clone) loadInstance(i int) (*Subgraph, error) {
 	p := filepath.Join(c.dir, "instances", fmt.Sprintf("%d", i))
 	return LoadSubgraph(p, false)
+}
+
+func (c *Clone) Img() (f *os.File, modtime time.Time, err error) {
+	dot := filepath.Join(c.dir, "pattern.dot")
+	path := filepath.Join(c.dir, "pattern.png")
+	fi, err := os.Stat(path)
+	if err != nil && os.IsNotExist(err) {
+		err = c.generateImg(dot, path)
+		if err != nil {
+			return nil, modtime, err
+		}
+		modtime = time.Now().UTC()
+	} else if err != nil {
+		return nil, modtime, err
+	} else {
+		modtime = fi.ModTime()
+	}
+	f, err = os.Open(path)
+	if err != nil {
+		return nil, modtime, err
+	}
+	return f, modtime, nil
+}
+
+func (c *Clone) generateImg(src, out string) error {
+	dot, err := exec.LookPath("dot")
+	if err != nil {
+		return err
+	}
+	f, err := os.Create(out)
+	if err != nil {
+		return err
+	}
+	cmd := exec.Cmd{
+		Path: dot,
+		Args: []string{"dot", "-Tpng", src},
+		Stdout: f,
+		Stderr: os.Stderr,
+	}
+	err = cmd.Run()
+	f.Close()
+	if err != nil {
+		os.Remove(out)
+		return err
+	}
+	return nil
 }
 

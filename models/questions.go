@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 )
 
 import (
@@ -42,39 +43,40 @@ type Form struct {
 }
 
 type Renderable interface {
-	HTML() template.HTML
+	Key() string
+	HTML(err error) template.HTML
 }
 
 var freeTmpl = template.Must(template.New("freeResponse").Parse(
 `<label>
-	<div class="question{{if .Required}} required{{end}}">
-		{{.Question.Question}}
+	<div class="question{{if .question.Required}} required{{end}}">
+		{{.question.Question.Question}} {{if .error}} <div class="error">{{.error}}</div> {{end}}
 	</div>
 	<div class="answer">
-		<textarea id="{{.Name}}" name="{{.Name}}" maxlength={{.MaxLength}}></textarea>
+		<textarea name="{{.question.Name}}" maxlength={{.question.MaxLength}} cols="60" rows="6"></textarea>
 	</div>
 </label>`))
 
 var multiTmpl = template.Must(template.New("multipleChoice").Parse(
 `<label>
-	<div class="question{{if .Required}} required{{end}}">
-		{{.Question.Question}}
-	</div>{{with $q := .}}{{range $a := .Answers}}
+	<div class="question{{if .question.Required}} required{{end}}">
+		{{.question.Question.Question}} {{if .error}} <div class="error">{{.error}}</div> {{end}}
+	</div>{{$q := .question}}{{range $a := $q.Answers}}
 	<div class="answer">
 		<input type="radio" name="{{$q.Name}}" value="{{$a.Value}}"/>
 		{{$a.Answer}}
-	</div>{{end}}{{end}}
+	</div>{{end}}
 </label>`))
 
 var formTmpl = template.Must(template.New("form").Parse(
-`<form action="{{.Action}}" method="post">{{range $q := .Questions}}
-{{$q.HTML}}{{end}}
-<input type="hidden" name="csrf" value="{{.Csrf}}"/>
-<div class="submit"><input type="submit" value="{{.SubmitText}}"/></div>
+`<form action="{{.form.Action}}" method="post">{{$e := .errors}}{{range $q := .form.Questions}}
+{{$q.HTML (index $e $q.Key)}}{{end}}
+<input type="hidden" name="csrf" value="{{.form.Csrf}}"/>
+<div class="submit"><input type="submit" value="{{.form.SubmitText}}"/></div>
 </form>`))
 
 
-func (f *Form) Decode(u *User, cid int, r *http.Request) (*SurveyAnswer, schema.MultiError, error) {
+func (f *Form) Decode(s *Session, u *User, cid int, r *http.Request) (*SurveyAnswer, schema.MultiError, error) {
 	err := r.ParseForm()
 	if err != nil {
 		return nil, nil, err
@@ -86,6 +88,11 @@ func (f *Form) Decode(u *User, cid int, r *http.Request) (*SurveyAnswer, schema.
 	}
 	errors := make(schema.MultiError)
 	form := r.PostForm
+	if value, has := form["csrf"]; !has {
+		errors["csrf"] = fmt.Errorf("invalid csrf token")
+	} else if !s.ValidCsrf(r.URL.Path, strings.Join(value, "")) {
+		errors["csrf"] = fmt.Errorf("invalid csrf token")
+	}
 	for qid, r := range f.Questions {
 		switch q := r.(type) {
 		case *MultipleChoice:
@@ -115,7 +122,7 @@ func (f *Form) Decode(u *User, cid int, r *http.Request) (*SurveyAnswer, schema.
 					answer.Responses = append(answer.Responses, Response{
 						QuestionID: qid,
 						Answer: aid,
-						Text: value[0],
+						Text: strings.Join(value, ""),
 					})
 				}
 			}
@@ -136,11 +143,21 @@ func (f *Form) Decode(u *User, cid int, r *http.Request) (*SurveyAnswer, schema.
 					Text: "Not Answered",
 				})
 			} else {
-				answer.Responses = append(answer.Responses, Response{
-					QuestionID: qid,
-					Answer: -3,
-					Text: value[0],
-				})
+				text := strings.Join(value, "")
+				if len(text) > q.MaxLength {
+					errors[q.Name] = fmt.Errorf("Response was too long")
+					answer.Responses = append(answer.Responses, Response{
+						QuestionID: qid,
+						Answer: -2,
+						Text: "Bad Answer",
+					})
+				} else {
+					answer.Responses = append(answer.Responses, Response{
+						QuestionID: qid,
+						Answer: -3,
+						Text: text,
+					})
+				}
 			}
 		default:
 			log.Panic(fmt.Errorf("unexpected question type"))
@@ -149,16 +166,33 @@ func (f *Form) Decode(u *User, cid int, r *http.Request) (*SurveyAnswer, schema.
 	return answer, errors, nil
 }
 
-func (f *Form) HTML() template.HTML {
-	return HTML(formTmpl, f)
+func (f *Form) HTML(errs schema.MultiError) template.HTML {
+	return HTML(formTmpl, map[string]interface{}{
+		"form": f,
+		"errors": map[string]error(errs),
+	})
 }
 
-func (q *FreeResponse) HTML() template.HTML {
-	return HTML(freeTmpl, q)
+func (q *FreeResponse) Key() string {
+	return q.Name
 }
 
-func (q *MultipleChoice) HTML() template.HTML {
-	return HTML(multiTmpl, q)
+func (q *FreeResponse) HTML(err error) template.HTML {
+	return HTML(freeTmpl, map[string]interface{}{
+		"question": q,
+		"error": err,
+	})
+}
+
+func (q *MultipleChoice) Key() string {
+	return q.Name
+}
+
+func (q *MultipleChoice) HTML(err error) template.HTML {
+	return HTML(multiTmpl, map[string]interface{}{
+		"question": q,
+		"error": err,
+	})
 }
 
 func (q *MultipleChoice) AnswerNumber(key string) (int, error) {

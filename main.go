@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -69,9 +70,17 @@ func main() {
 		case "-l", "--listen":
 			listen = oa.Arg()
 		case "-a", "--assets":
-			assets = oa.Arg()
+			assets, err = filepath.Abs(oa.Arg())
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "assets path was bad: %v", err)
+				Usage(ErrorCodes["opts"])
+			}
 		case "-c", "--clones":
-			clones = oa.Arg()
+			clones, err = filepath.Abs(oa.Arg())
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "clones path was bad: %v", err)
+				Usage(ErrorCodes["opts"])
+			}
 		default:
 			fmt.Fprintf(os.Stderr, "Unknown flag '%v'\n", oa.Opt())
 			Usage(ErrorCodes["opts"])

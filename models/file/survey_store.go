@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 import (
@@ -23,6 +24,7 @@ type SurveyLogStore struct {
 	cloneIdxs *set.SortedSet
 	answersPath string
 	cache *surveyCache
+	lock sync.Mutex
 }
 
 type surveyCache struct {
@@ -56,6 +58,8 @@ func NewSurveyStore(dir string, questions []models.Renderable, clones []*clones.
 }
 
 func (st *SurveyLogStore) Do(f func(*models.Survey) error) error {
+	st.lock.Lock()
+	defer st.lock.Unlock()
 	answersCount, s, err := st.load()
 	if err != nil {
 		return err

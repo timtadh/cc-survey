@@ -23,6 +23,7 @@ import (
 	"github.com/timtadh/cc-survey/models/file"
 )
 
+
 type Views struct {
 	assetPath string
 	clonesPath string
@@ -82,7 +83,9 @@ func Routes(assetPath, clonesPath string) http.Handler {
 	mux.GET("/survey", v.Context(v.LoggedIn(v.Survey)))
 	mux.GET("/survey/:clone", v.Context(v.LoggedIn(v.SurveyQuestion)))
 	mux.POST("/survey/:clone", v.Context(v.LoggedIn(v.DoSurveyQuestion)))
-	
+
+	mux.GET("/clones/:clone/pattern.png", v.Context(v.LoggedIn(v.PatternImg)))
+
 	v.Init()
 	return mux
 }

@@ -41,7 +41,11 @@ var Questions = []models.Renderable{
 func (v *Views) SurveyQuestion(c *Context) {
 	cid, err := strconv.Atoi(c.p.ByName("clone"))
 	if err != nil || cid < 0 || cid >= len(v.clones) {
-		log.Println(err)
+		if err != nil {
+			log.Println(err)
+		} else {
+			log.Println("invalid clone id")
+		}
 		c.rw.WriteHeader(400)
 		c.rw.Write([]byte("malformed parameter submitted"))
 		return
@@ -56,7 +60,7 @@ func (v *Views) SurveyQuestion(c *Context) {
 	err = v.tmpl.ExecuteTemplate(c.rw, "survey_question", map[string]interface{}{
 		"cid": cid,
 		"clone": v.clones[cid],
-		"form": f.HTML(),
+		"form": f.HTML(map[string]error{}),
 	})
 	if err != nil {
 		log.Panic(err)
@@ -67,8 +71,7 @@ func (v *Views) ErrorSurveyQuestion(c *Context, cid int, f *models.Form, a *mode
 	err := v.tmpl.ExecuteTemplate(c.rw, "survey_question", map[string]interface{}{
 		"cid": cid,
 		"clone": v.clones[cid],
-		"form": f.HTML(),
-		"errors": errs,
+		"form": f.HTML(errs),
 	})
 	if err != nil {
 		log.Panic(err)
@@ -78,7 +81,11 @@ func (v *Views) ErrorSurveyQuestion(c *Context, cid int, f *models.Form, a *mode
 func (v *Views) DoSurveyQuestion(c *Context) {
 	cid, err := strconv.Atoi(c.p.ByName("clone"))
 	if err != nil || cid < 0 || cid >= len(v.clones) {
-		log.Println(err)
+		if err != nil {
+			log.Println(err)
+		} else {
+			log.Println("invalid clone id")
+		}
 		c.rw.WriteHeader(400)
 		c.rw.Write([]byte("malformed parameter submitted"))
 		return
@@ -90,7 +97,7 @@ func (v *Views) DoSurveyQuestion(c *Context) {
 		SubmitText: "Submit Answers",
 		Questions: Questions,
 	}
-	answer, ferr, err := f.Decode(c.u, cid, c.r)
+	answer, ferr, err := f.Decode(c.s, c.u, cid, c.r)
 	if err != nil {
 		c.rw.WriteHeader(400)
 		c.rw.Write([]byte("malformed form submitted"))
