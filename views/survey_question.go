@@ -97,7 +97,7 @@ func (v *Views) DoSurveyQuestion(c *Context) {
 		SubmitText: "Submit Answers",
 		Questions: Questions,
 	}
-	answer, ferr, err := f.Decode(c.s, c.u, cid, c.r)
+	answer, ferr, err := f.Decode(c.s, c.u, v.clones[cid], cid, c.r)
 	if err != nil {
 		c.rw.WriteHeader(400)
 		c.rw.Write([]byte("malformed form submitted"))

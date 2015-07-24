@@ -13,6 +13,10 @@ import (
 	"github.com/gorilla/schema"
 )
 
+import (
+	"github.com/timtadh/cc-survey/clones"
+)
+
 
 type Question struct {
 	Name string
@@ -76,7 +80,7 @@ var formTmpl = template.Must(template.New("form").Parse(
 </form>`))
 
 
-func (f *Form) Decode(s *Session, u *User, cid int, r *http.Request) (*SurveyAnswer, schema.MultiError, error) {
+func (f *Form) Decode(s *Session, u *User, c *clones.Clone, cid int, r *http.Request) (*SurveyAnswer, schema.MultiError, error) {
 	err := r.ParseForm()
 	if err != nil {
 		return nil, nil, err
@@ -84,6 +88,7 @@ func (f *Form) Decode(s *Session, u *User, cid int, r *http.Request) (*SurveyAns
 	answer := &SurveyAnswer{
 		UserEmail: u.Email,
 		CloneID: cid,
+		SelectionPr: c.Pr(),
 		Responses: make([]Response, 0, len(f.Questions)),
 	}
 	errors := make(schema.MultiError)

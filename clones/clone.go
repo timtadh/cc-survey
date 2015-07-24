@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io/ioutil"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -79,6 +80,24 @@ func (c *Clone) loadPattern() (*Subgraph, error) {
 func (c *Clone) loadInstance(i int) (*Subgraph, error) {
 	p := filepath.Join(c.dir, "instances", fmt.Sprintf("%d", i))
 	return LoadSubgraph(c.source, p, false)
+}
+
+func (c *Clone) Pr() float64 {
+	if c.pr != 0 {
+		return c.pr
+	}
+	prBytes, err := ioutil.ReadFile(filepath.Join(c.dir, "pattern.pr"))
+	if err != nil {
+		log.Println(err)
+		return 0
+	}
+	pr, err := strconv.ParseFloat(string(bytes.TrimSpace(prBytes)), 64)
+	if err != nil {
+		log.Println(err)
+		return 0
+	}
+	c.pr = pr
+	return c.pr
 }
 
 func (c *Clone) Img() (f *os.File, modtime time.Time, err error) {
