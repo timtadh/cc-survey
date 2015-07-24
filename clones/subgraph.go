@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"html/template"
 	"log"
 	"os"
 	"path/filepath"
@@ -18,7 +19,7 @@ import (
 type Subgraph struct {
 	source string
 	dir string
-	java string
+	java template.HTML
 	jimple string
 	pattern bool
 	V []*Vertex
@@ -40,6 +41,8 @@ type Position struct {
 	StartLine, EndLine int
 	StartColumn, EndColumn int
 }
+
+type Positions []*Position
 
 type errorList []error
 
@@ -74,23 +77,31 @@ func LoadSubgraph(source, dir string, pattern bool) (*Subgraph, error) {
 	return sg, nil
 }
 
-func (sg *Subgraph) Java() string {
+func (sg *Subgraph) Class() string {
+	return sg.V[0].Class()
+}
+
+func (sg *Subgraph) PathToJava() string {
+	return sg.V[0].PathToJava()
+}
+
+func (sg *Subgraph) Java() template.HTML {
 	if sg.java != "" {
 		return sg.java
 	}
-	pathFrag := sg.V[0].PathToClass()
-	path := filepath.Join(sg.source, pathFrag) + ".java"
+	pathFrag := sg.V[0].PathToJava()
+	path := filepath.Join(sg.source, pathFrag)
 	f, err := os.Open(path)
 	if err != nil {
 		log.Println(err)
 		return "Could not load instance"
 	}
 	defer f.Close()
-	positions := make([]*Position, 0, len(sg.V))
+	positions := make(Positions, 0, len(sg.V))
 	min := -1
 	max := 0
 	for _, v := range sg.V {
-		if pathFrag != v.PathToClass() {
+		if pathFrag != v.PathToJava() {
 			log.Println(fmt.Errorf("instance spread across multiple files"))
 			return "Could not load instance"
 		}
@@ -109,17 +120,21 @@ func (sg *Subgraph) Java() string {
 	}
 	lines := make([]string, 0, max-min)
 	i := 0
-	log.Println(path, min, max)
 	processLines(f, func(l []byte) {
-		if i < min || i > max {
+		if i < min - 5 || i > max + 5 {
 			i++
 			return
 		}
-		line := fmt.Sprintf("%d: %v", i, string(l))
+		var line string
+		if positions.ContainsLine(i+1) {
+			line = fmt.Sprintf(`<div class="line">%d: <span class="highlight">%v</span></div>`, i, string(l))
+		} else {
+			line = fmt.Sprintf(`<div class="line">%d: %v</div>`, i, string(l))
+		}
 		lines = append(lines, line)
 		i++
 	})
-	sg.java = strings.Join(lines, "\n")
+	sg.java = template.HTML(strings.Join(lines, ""))
 	return sg.java
 }
 
@@ -127,16 +142,23 @@ func (v *Vertex) Class() string {
 	return v.Attrs["class_name"].(string)
 }
 
-func (v *Vertex) PathToClass() string {
-	fqcn := v.Class()
-	var name string
-	if strings.Contains(fqcn, "$") {
-		split := strings.SplitN(fqcn, "$", 1)
-		name = split[0]
-	} else {
-		name = fqcn
+func (v *Vertex) PackageName() string {
+	return v.Attrs["package_name"].(string)
+}
+
+func (v *Vertex) PathToJava() string {
+	pkg := v.PackageName()
+	name := v.Attrs["source_file"].(string)
+	return filepath.Join(strings.Replace(pkg, ".", string(filepath.Separator), -1), name)
+}
+
+func (positions Positions) ContainsLine(line int) bool {
+	for _, p := range positions {
+		if line >= p.StartLine && line <= p.EndLine {
+			return true
+		}
 	}
-	return strings.Replace(name, ".", "/", -1)
+	return false
 }
 
 func (v *Vertex) Position() (p *Position, err error) {

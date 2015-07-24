@@ -1,13 +1,34 @@
-{{template "header" printf "Survey Question %d" .cid}}
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Question {{.cid}}</title>
+	<style>
+		.highlight {
+			background-color: tan;
+		}
+	</style>
+</head>
+<body>
 <h1>Survey Question {{.cid}}</h1>
 <div>
 	{{$cid := .cid}}
 	{{range $inst := .clone.Instances}}
 	<hr/>
 	<img src="/clones/{{$cid}}/pattern.png" text="image of the pattern"/>
-	<pre>{{$inst.Java}}</pre>
+	<div>
+		class: {{$inst.Class}}
+	</div>
+	<div>
+		source file: {{$inst.PathToJava}}
+	</div>
+	<pre class="code">
+		{{$inst.Java}}
+	</pre>
 	<hr/>
 	{{end}}
 </div>
 {{.form}}
-{{template "footer"}}
+</body>
+</html>
+
+
