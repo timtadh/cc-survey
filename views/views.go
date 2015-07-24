@@ -27,6 +27,7 @@ import (
 type Views struct {
 	assetPath string
 	clonesPath string
+	sourcePath string
 	sessions models.SessionStore
 	users models.UserStore
 	survey models.SurveyStore
@@ -49,7 +50,7 @@ func signalSelf(s os.Signal) {
 	}
 }
 
-func Routes(assetPath, clonesPath string) http.Handler {
+func Routes(assetPath, clonesPath, sourcePath string) http.Handler {
 	mux := httprouter.New()
 	assetPath = filepath.Clean(assetPath)
 	users, err := file.GetUserStore(filepath.Join(assetPath, "data"))
@@ -70,6 +71,7 @@ func Routes(assetPath, clonesPath string) http.Handler {
 	v := &Views{
 		assetPath: assetPath,
 		clonesPath: filepath.Clean(clonesPath),
+		sourcePath: filepath.Clean(sourcePath),
 		sessions: mem.NewSessionMapStore("session"),
 		users: users,
 		decoder: schema.NewDecoder(),
@@ -101,7 +103,7 @@ func (v *Views) Init() {
 }
 
 func (v *Views) loadClones() {
-	c, err := clones.LoadAll(v.clonesPath)
+	c, err := clones.LoadAll(v.clonesPath, v.sourcePath)
 	if err != nil {
 		log.Panic(err)
 	}

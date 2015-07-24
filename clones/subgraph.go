@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +16,7 @@ import (
 
 
 type Subgraph struct {
+	source string
 	dir string
 	java string
 	jimple string
@@ -34,6 +36,11 @@ type Edge struct {
 	Label string
 }
 
+type Position struct {
+	StartLine, EndLine int
+	StartColumn, EndColumn int
+}
+
 type errorList []error
 
 func (self errorList) Error() string {
@@ -44,7 +51,7 @@ func (self errorList) Error() string {
 	return "[" + strings.Join(s, ",") + "]"
 }
 
-func LoadSubgraph(dir string, pattern bool) (*Subgraph, error) {
+func LoadSubgraph(source, dir string, pattern bool) (*Subgraph, error) {
 	var vegPath string
 	if pattern {
 		vegPath = filepath.Join(dir, "pattern.veg")
@@ -56,6 +63,7 @@ func LoadSubgraph(dir string, pattern bool) (*Subgraph, error) {
 		return nil, err
 	}
 	sg := &Subgraph{
+		source: source,
 		dir: dir,
 		pattern: pattern,
 	}
@@ -64,6 +72,97 @@ func LoadSubgraph(dir string, pattern bool) (*Subgraph, error) {
 		return nil, err
 	}
 	return sg, nil
+}
+
+func (sg *Subgraph) Java() string {
+	if sg.java != "" {
+		return sg.java
+	}
+	pathFrag := sg.V[0].PathToClass()
+	path := filepath.Join(sg.source, pathFrag) + ".java"
+	f, err := os.Open(path)
+	if err != nil {
+		log.Println(err)
+		return "Could not load instance"
+	}
+	defer f.Close()
+	positions := make([]*Position, 0, len(sg.V))
+	min := -1
+	max := 0
+	for _, v := range sg.V {
+		if pathFrag != v.PathToClass() {
+			log.Println(fmt.Errorf("instance spread across multiple files"))
+			return "Could not load instance"
+		}
+		p, err := v.Position()
+		if err != nil {
+			log.Println(err)
+			return "Could not load instance"
+		}
+		positions = append(positions, p)
+		if min == -1 || p.StartLine < min {
+			min = p.StartLine
+		}
+		if p.EndLine > max {
+			max = p.EndLine
+		}
+	}
+	lines := make([]string, 0, max-min)
+	i := 0
+	log.Println(path, min, max)
+	processLines(f, func(l []byte) {
+		if i < min || i > max {
+			i++
+			return
+		}
+		line := fmt.Sprintf("%d: %v", i, string(l))
+		lines = append(lines, line)
+		i++
+	})
+	sg.java = strings.Join(lines, "\n")
+	return sg.java
+}
+
+func (v *Vertex) Class() string {
+	return v.Attrs["class_name"].(string)
+}
+
+func (v *Vertex) PathToClass() string {
+	fqcn := v.Class()
+	var name string
+	if strings.Contains(fqcn, "$") {
+		split := strings.SplitN(fqcn, "$", 1)
+		name = split[0]
+	} else {
+		name = fqcn
+	}
+	return strings.Replace(name, ".", "/", -1)
+}
+
+func (v *Vertex) Position() (p *Position, err error) {
+	sl, err := v.Attrs["start_line"].(json.Number).Int64()
+	if err != nil {
+		return nil, err
+	}
+	el, err := v.Attrs["end_line"].(json.Number).Int64()
+	if err != nil {
+		return nil, err
+	}
+	sc, err := v.Attrs["start_column"].(json.Number).Int64()
+	if err != nil {
+		return nil, err
+	}
+	ec, err := v.Attrs["end_column"].(json.Number).Int64()
+	if err != nil {
+		return nil, err
+	}
+	p = &Position{
+		StartLine: int(sl),
+		EndLine: int(el),
+		StartColumn: int(sc),
+		EndColumn: int(ec),
+	}
+	return p, nil
 }
 
 func (sg *Subgraph) load(path string) error {

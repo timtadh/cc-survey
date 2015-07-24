@@ -37,6 +37,7 @@ Options
                                         default: 0.0.0.0:80
     -a, --assets=<path>                 path to asset dir
     -c, --clones=<path>                 path to clones dir
+    -s, --src=<path>                    path to the source
 `
 
 func Usage(code int) {
@@ -51,8 +52,8 @@ func Usage(code int) {
 func main() {
 	_, optargs, err := getopt.GetOpt(
 		os.Args[1:],
-		"hl:a:c:",
-		[]string{ "help", "listen=", "assets", "clones=" },
+		"hl:a:c:s:",
+		[]string{ "help", "listen=", "assets", "clones=", "src=" },
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error parsing command line flags", err)
@@ -62,6 +63,7 @@ func main() {
 	listen := "0.0.0.0:80"
 	assets := ""
 	clones := ""
+	source := ""
 	for _, oa := range optargs {
 		switch oa.Opt() {
 		case "-h", "--help":
@@ -81,6 +83,12 @@ func main() {
 				fmt.Fprintf(os.Stderr, "clones path was bad: %v", err)
 				Usage(ErrorCodes["opts"])
 			}
+		case "-s", "--src":
+			source, err = filepath.Abs(oa.Arg())
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "source path was bad: %v", err)
+				Usage(ErrorCodes["opts"])
+			}
 		default:
 			fmt.Fprintf(os.Stderr, "Unknown flag '%v'\n", oa.Opt())
 			Usage(ErrorCodes["opts"])
@@ -91,13 +99,18 @@ func main() {
 		fmt.Fprintln(os.Stderr, "You must supply a path to the assets")
 		Usage(ErrorCodes["opts"])
 	}
-	
+
 	if clones == "" {
 		fmt.Fprintln(os.Stderr, "You must supply a path to the clones")
 		Usage(ErrorCodes["opts"])
 	}
 
-	handler := views.Routes(assets, clones)
+	if source == "" {
+		fmt.Fprintln(os.Stderr, "You must supply a path to the source")
+		Usage(ErrorCodes["opts"])
+	}
+
+	handler := views.Routes(assets, clones, source)
 
 	server := &http.Server{
 		Addr: listen,

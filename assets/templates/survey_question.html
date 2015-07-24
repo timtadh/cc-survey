@@ -1,7 +1,13 @@
 {{template "header" printf "Survey Question %d" .cid}}
 <h1>Survey Question {{.cid}}</h1>
 <div>
-	<img src="/clones/{{.cid}}/pattern.png" text="image of the pattern"/>
+	{{$cid := .cid}}
+	{{range $inst := .clone.Instances}}
+	<hr/>
+	<img src="/clones/{{$cid}}/pattern.png" text="image of the pattern"/>
+	<pre>{{$inst.Java}}</pre>
+	<hr/>
+	{{end}}
 </div>
 {{.form}}
 {{template "footer"}}

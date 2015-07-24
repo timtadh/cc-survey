@@ -12,6 +12,7 @@ import (
 )
 
 type Clone struct {
+	source string
 	dir string
 	pr float64
 	Pattern *Subgraph
@@ -30,7 +31,7 @@ func loadCount(dir string) (int, error) {
 	return int(count), nil
 }
 
-func LoadAll(dir string) ([]*Clone, error) {
+func LoadAll(dir, source string) ([]*Clone, error) {
 	count, err := loadCount(dir)
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func LoadAll(dir string) ([]*Clone, error) {
 	clones := make([]*Clone, 0, count)
 	for i := 0; i < count; i++ {
 		p := filepath.Join(dir, fmt.Sprintf("%d", i))
-		clone, err := Load(p)
+		clone, err := Load(p, source)
 		if err != nil {
 			return nil, err
 		}
@@ -47,13 +48,14 @@ func LoadAll(dir string) ([]*Clone, error) {
 	return clones, nil
 }
 
-func Load(dir string) (*Clone, error) {
+func Load(dir, source string) (*Clone, error) {
 	count, err := loadCount(dir)
 	if err != nil {
 		return nil, err
 	}
 	c := &Clone{
 		dir: dir,
+		source: source,
 		Instances: make([]*Subgraph, 0, count),
 	}
 	c.Pattern, err = c.loadPattern()
@@ -71,12 +73,12 @@ func Load(dir string) (*Clone, error) {
 }
 
 func (c *Clone) loadPattern() (*Subgraph, error) {
-	return LoadSubgraph(c.dir, true)
+	return LoadSubgraph(c.source, c.dir, true)
 }
 
 func (c *Clone) loadInstance(i int) (*Subgraph, error) {
 	p := filepath.Join(c.dir, "instances", fmt.Sprintf("%d", i))
-	return LoadSubgraph(p, false)
+	return LoadSubgraph(c.source, p, false)
 }
 
 func (c *Clone) Img() (f *os.File, modtime time.Time, err error) {
