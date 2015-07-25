@@ -119,22 +119,26 @@ func (sg *Subgraph) Java() template.HTML {
 		}
 	}
 	lines := make([]string, 0, max-min)
-	i := 0
+	i := 1
 	processLines(f, func(l []byte) {
 		if i < min - 5 || i > max + 5 {
 			i++
 			return
 		}
 		var line string
-		if positions.ContainsLine(i+1) {
-			line = fmt.Sprintf(`<div class="line">%d: <span class="highlight">%v</span></div>`, i, string(l))
+		odd := ""
+		if i % 2 == 1 {
+			odd = " odd"
+		}
+		if positions.ContainsLine(i) {
+			line = fmt.Sprintf(`<div class="line%v"><span class="number highlight">%d: </span>%v</div>`, odd, i, positions.Highlight(i, string(l)))
 		} else {
-			line = fmt.Sprintf(`<div class="line">%d: %v</div>`, i, string(l))
+			line = fmt.Sprintf(`<div class="line%v"><span class="number">%d: </span>%v</div>`, odd, i, string(l))
 		}
 		lines = append(lines, line)
 		i++
 	})
-	sg.java = template.HTML(strings.Join(lines, ""))
+	sg.java = template.HTML(strings.TrimSpace(strings.Join(lines, "")))
 	return sg.java
 }
 
@@ -159,6 +163,40 @@ func (positions Positions) ContainsLine(line int) bool {
 		}
 	}
 	return false
+}
+
+func (positions Positions) Contains(line, col int) bool {
+	for _, p := range positions {
+		if line >= p.StartLine && line <= p.EndLine {
+			if col >= p.StartColumn && col <= p.EndColumn {
+				return true
+			} else if p.StartColumn < 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (positions Positions) Highlight(idx int, line string) string {
+	pos := make(Positions, 0, len(positions))
+	for _, p := range positions {
+		if idx >= p.StartLine && idx <= p.EndLine {
+			pos = append(pos, p)
+		}
+	}
+	if len(pos) < 0 {
+		return fmt.Sprintf(`<span class="highlight">%v</span>`, line)
+	}
+	cols := make([]string, 0, len(line))
+	for i, col := range line {
+		if pos.Contains(idx, i) {
+			cols = append(cols, `<span class="highlight">`, string(col), `</span>`)
+		} else {
+			cols = append(cols, string(col))
+		}
+	}
+	return strings.Join(cols, "")
 }
 
 func (v *Vertex) Position() (p *Position, err error) {

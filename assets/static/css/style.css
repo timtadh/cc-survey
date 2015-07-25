@@ -1,0 +1,93 @@
+
+h1.title {
+	margin: 12px;
+}
+
+.instance {
+	margin: 2em;
+	border: 1px dotted gray;
+}
+
+.instance .img {
+	overflow: auto;
+}
+
+code {
+	background-color: #f7f7f0;
+	border: 1px solid gray;
+}
+
+.code {
+	margin: 1em;
+	border: 1px solid gray;
+	padding-top: 1em;
+}
+
+.code .label {
+	margin-left: 1em;
+	margin-right: 1em;
+}
+
+.code pre {
+	border: 1px solid gray;
+	margin: 1em;
+}
+
+.code pre.java {
+	float: left;
+	width: 50%;
+}
+
+.code pre.jimple {
+}
+
+.code pre .line.odd {
+	background-color: #fafafa;
+}
+
+.code pre .line .number {
+	background-color: #f0f0f0;
+}
+
+.code pre .line .highlight {
+	background-color: #bfbfbf;
+}
+
+.code pre .line .number.highlight {
+	background-color: #a0a0a0;
+}
+
+form.survey, .instructions {
+	width: 50%;
+	margin: auto;
+}
+
+.instructions {
+	margin-bottom: 1em;
+}
+
+form.survey {
+	border: 1px dotted gray;
+	background-color: #fcfcfc;
+}
+
+form.survey .question {
+	margin: 1em;
+}
+
+form.survey .answer {
+	margin-left: 3em;
+}
+
+form.survey .question.required::after {
+	content: 'required';
+	color: red;
+	margin-left: 2em;
+}
+
+form.survey .submit {
+	margin-top: 2em;
+	margin-bottom: 1em;
+	margin-left: 1em;
+}
+

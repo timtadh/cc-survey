@@ -1,34 +1,26 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<title>Question {{.cid}}</title>
-	<style>
-		.highlight {
-			background-color: tan;
-		}
-	</style>
-</head>
-<body>
-<h1>Survey Question {{.cid}}</h1>
-<div>
+{{template "header" (printf "Survey Question %v" .cid)}}
+<div class="clone">
 	{{$cid := .cid}}
 	{{range $inst := .clone.Instances}}
-	<hr/>
-	<img src="/clones/{{$cid}}/pattern.png" text="image of the pattern"/>
-	<div>
-		class: {{$inst.Class}}
+	<div class="instance">
+		<div class="img">
+			<img src="/clones/{{$cid}}/pattern.png" text="image of the pattern"/>
+		</div>
+		<div class="code">
+			<div class="label">
+				class: <code>{{$inst.Class}}</code>
+			</div>
+			<div class="label">
+				source file: <code>{{$inst.PathToJava}}</code>
+			</div>
+			<pre class="java">{{$inst.Java}}</pre>
+			<pre class="jimple">{{$inst.Java}}</pre>
+		</div>
 	</div>
-	<div>
-		source file: {{$inst.PathToJava}}
-	</div>
-	<pre class="code">
-		{{$inst.Java}}
-	</pre>
-	<hr/>
 	{{end}}
 </div>
+<div class="instructions">
+	Please answer the following questions about the code snippets displayed above.
+</div>
 {{.form}}
-</body>
-</html>
-
-
+{{template "footer"}}

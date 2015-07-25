@@ -88,6 +88,8 @@ func Routes(assetPath, clonesPath, sourcePath string) http.Handler {
 
 	mux.GET("/clones/:clone/pattern.png", v.Context(v.LoggedIn(v.PatternImg)))
 
+	mux.ServeFiles("/static/*filepath", http.Dir(filepath.Join(assetPath, "static")))
+
 	v.Init()
 	return mux
 }

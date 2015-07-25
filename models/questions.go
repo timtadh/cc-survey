@@ -62,18 +62,18 @@ var freeTmpl = template.Must(template.New("freeResponse").Parse(
 </label>`))
 
 var multiTmpl = template.Must(template.New("multipleChoice").Parse(
-`<label>
-	<div class="question{{if .question.Required}} required{{end}}">
+`<div class="question{{if .question.Required}} required{{end}}">
 		{{.question.Question.Question}} {{if .error}} <div class="error">{{.error}}</div> {{end}}
 	</div>{{$q := .question}}{{range $a := $q.Answers}}
 	<div class="answer">
+	<label>
 		<input type="radio" name="{{$q.Name}}" value="{{$a.Value}}"/>
 		{{$a.Answer}}
-	</div>{{end}}
-</label>`))
+	</label>
+</div>{{end}}`))
 
 var formTmpl = template.Must(template.New("form").Parse(
-`<form action="{{.form.Action}}" method="post">{{$e := .errors}}{{range $q := .form.Questions}}
+`<form class="survey" action="{{.form.Action}}" method="post">{{$e := .errors}}{{range $q := .form.Questions}}
 {{$q.HTML (index $e $q.Key)}}{{end}}
 <input type="hidden" name="csrf" value="{{.form.Csrf}}"/>
 <div class="submit"><input type="submit" value="{{.form.SubmitText}}"/></div>
