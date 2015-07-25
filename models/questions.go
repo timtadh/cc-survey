@@ -88,6 +88,8 @@ func (f *Form) Decode(s *Session, u *User, c *clones.Clone, cid int, r *http.Req
 	answer := &SurveyAnswer{
 		UserEmail: u.Email,
 		CloneID: cid,
+		CloneExtID: c.ExtId(),
+		CloneDir: c.Dir(),
 		SelectionPr: c.Pr(),
 		Responses: make([]Response, 0, len(f.Questions)),
 	}

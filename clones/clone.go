@@ -15,6 +15,7 @@ import (
 type Clone struct {
 	source string
 	dir string
+	ext_id int
 	pr float64
 	Pattern *Subgraph
 	Instances []*Subgraph
@@ -40,24 +41,30 @@ func LoadAll(dir, source string) ([]*Clone, error) {
 	clones := make([]*Clone, 0, count)
 	for i := 0; i < count; i++ {
 		p := filepath.Join(dir, fmt.Sprintf("%d", i))
-		clone, err := Load(p, source)
+		clone, err := Load(i, p, source)
 		if err != nil {
-			return nil, err
+			log.Println("skipping clone", i, err)
+			continue
 		}
 		clones = append(clones, clone)
 	}
 	return clones, nil
 }
 
-func Load(dir, source string) (*Clone, error) {
+func Load(ext_id int, dir, source string) (*Clone, error) {
 	count, err := loadCount(dir)
 	if err != nil {
 		return nil, err
 	}
 	c := &Clone{
+		ext_id: ext_id,
 		dir: dir,
 		source: source,
 		Instances: make([]*Subgraph, 0, count),
+	}
+	err = c.loadPr()
+	if err != nil {
+		return nil, err
 	}
 	c.Pattern, err = c.loadPattern()
 	if err != nil {
@@ -82,21 +89,28 @@ func (c *Clone) loadInstance(i int) (*Subgraph, error) {
 	return LoadSubgraph(c.source, p, false)
 }
 
-func (c *Clone) Pr() float64 {
-	if c.pr != 0 {
-		return c.pr
-	}
+func (c *Clone) loadPr() (error) {
 	prBytes, err := ioutil.ReadFile(filepath.Join(c.dir, "pattern.pr"))
 	if err != nil {
-		log.Println(err)
-		return 0
+		return err
 	}
 	pr, err := strconv.ParseFloat(string(bytes.TrimSpace(prBytes)), 64)
 	if err != nil {
-		log.Println(err)
-		return 0
+		return err
 	}
 	c.pr = pr
+	return nil
+}
+
+func (c *Clone) ExtId() int {
+	return c.ext_id
+}
+
+func (c *Clone) Dir() string {
+	return c.dir
+}
+
+func (c *Clone) Pr() float64 {
 	return c.pr
 }
 

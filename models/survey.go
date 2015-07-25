@@ -20,6 +20,8 @@ type Survey struct {
 type SurveyAnswer struct {
 	UserEmail string
 	CloneID int
+	CloneExtID int
+	CloneDir string
 	SelectionPr float64
 	Responses []Response
 }

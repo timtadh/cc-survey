@@ -48,6 +48,20 @@ func NewSurveyStore(dir string, questions []models.Renderable, clones []*clones.
 	for i := 0; i < len(clones); i++ {
 		cloneIdxs.Add(types.Int(i))
 	}
+	qPath := filepath.Join(dir, "questions")
+	if q, err := os.Create(qPath); err != nil {
+		return nil, err
+	} else {
+		defer q.Close()
+		bytes, err := json.Marshal(questions)
+		if err != nil {
+			return nil, err
+		}
+		_, err = q.Write(bytes)
+		if err != nil {
+			return nil, err
+		}
+	}
 	st := &SurveyLogStore{
 		questions: questions,
 		clones: clones,
