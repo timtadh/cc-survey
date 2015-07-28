@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 import (
@@ -24,6 +25,7 @@ type Subgraph struct {
 	pattern bool
 	V []*Vertex
 	E []*Edge
+	lock sync.Mutex
 }
 
 type Vertex struct {
@@ -86,6 +88,8 @@ func (sg *Subgraph) PathToJava() string {
 }
 
 func (sg *Subgraph) Java() template.HTML {
+	sg.lock.Lock()
+	defer sg.lock.Unlock()
 	if sg.java != "" {
 		return sg.java
 	}

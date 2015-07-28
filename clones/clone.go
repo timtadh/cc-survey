@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+	"sync"
 )
 
 type Clone struct {
@@ -19,6 +20,7 @@ type Clone struct {
 	pr float64
 	Pattern *Subgraph
 	Instances []*Subgraph
+	lock sync.Mutex
 }
 
 func loadCount(dir string) (int, error) {
@@ -115,11 +117,13 @@ func (c *Clone) Pr() float64 {
 }
 
 func (c *Clone) Img() (f *os.File, modtime time.Time, err error) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
 	dot := filepath.Join(c.dir, "pattern.dot")
 	path := filepath.Join(c.dir, "pattern.png")
 	fi, err := os.Stat(path)
 	if err != nil && os.IsNotExist(err) {
-		err = c.generateImg(dot, path)
+		err = generateImg(dot, path)
 		if err != nil {
 			return nil, modtime, err
 		}
@@ -136,7 +140,7 @@ func (c *Clone) Img() (f *os.File, modtime time.Time, err error) {
 	return f, modtime, nil
 }
 
-func (c *Clone) generateImg(src, out string) error {
+func generateImg(src, out string) error {
 	dot, err := exec.LookPath("dot")
 	if err != nil {
 		return err

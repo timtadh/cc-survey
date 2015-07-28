@@ -28,6 +28,18 @@ var Questions = []models.Renderable{
 			models.Answer{"great", "I am feeling GREAT"},
 		},
 	},
+	&models.MultipleChoice{
+		Question: models.Question{
+			Name: "wizard",
+			Question: "Would you like to be a wizard?",
+			Required: true,
+		},
+		Answers: []models.Answer{
+			models.Answer{"yes", "I would"},
+			models.Answer{"no", "I would not"},
+			models.Answer{"already", "I am already a wizard"},
+		},
+	},
 	&models.FreeResponse{
 		Question: models.Question{
 			Name: "describe",
