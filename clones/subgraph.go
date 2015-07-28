@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 	"strings"
 	"sync"
 )
@@ -77,6 +78,30 @@ func LoadSubgraph(source, dir string, pattern bool) (*Subgraph, error) {
 		return nil, err
 	}
 	return sg, nil
+}
+
+func (sg *Subgraph) Img() (f *os.File, modtime time.Time, err error) {
+	sg.lock.Lock()
+	defer sg.lock.Unlock()
+	dot := filepath.Join(sg.dir, "embedding.dot")
+	path := filepath.Join(sg.dir, "embedding.png")
+	fi, err := os.Stat(path)
+	if err != nil && os.IsNotExist(err) {
+		err = generateImg(dot, path)
+		if err != nil {
+			return nil, modtime, err
+		}
+		modtime = time.Now().UTC()
+	} else if err != nil {
+		return nil, modtime, err
+	} else {
+		modtime = fi.ModTime()
+	}
+	f, err = os.Open(path)
+	if err != nil {
+		return nil, modtime, err
+	}
+	return f, modtime, nil
 }
 
 func (sg *Subgraph) Class() string {

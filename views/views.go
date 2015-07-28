@@ -87,6 +87,7 @@ func Routes(assetPath, clonesPath, sourcePath string) http.Handler {
 	mux.POST("/survey/:clone", v.Context(v.LoggedIn(v.DoSurveyQuestion)))
 
 	mux.GET("/clones/:clone/pattern.png", v.Context(v.LoggedIn(v.PatternImg)))
+	mux.GET("/clones/:clone/instances/:instance/embedding.png", v.Context(v.LoggedIn(v.InstanceImg)))
 
 	mux.ServeFiles("/static/*filepath", http.Dir(filepath.Join(assetPath, "static")))
 

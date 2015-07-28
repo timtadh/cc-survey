@@ -1,10 +1,10 @@
 {{template "header" (printf "Survey Question %v" .cid)}}
 <div class="clone">
 	{{$cid := .cid}}
-	{{range $inst := .clone.Instances}}
+	{{range $idx, $inst := .clone.Instances}}
 	<div class="instance">
 		<div class="img">
-			<img src="/clones/{{$cid}}/pattern.png" text="image of the pattern"/>
+			<img src="/clones/{{$cid}}/instances/{{$idx}}/embedding.png" alt="image of the embedding"/>
 		</div>
 		<div class="code">
 			<div class="label">
