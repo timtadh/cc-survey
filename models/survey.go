@@ -23,6 +23,7 @@ type SurveyAnswer struct {
 	CloneExtID int
 	CloneDir string
 	SelectionPr float64
+	ConditionalPr float64
 	Responses []Response
 }
 

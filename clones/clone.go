@@ -17,7 +17,8 @@ type Clone struct {
 	source string
 	dir string
 	ext_id int
-	pr float64
+	selection_pr float64
+	conditional_pr float64
 	Pattern *Subgraph
 	Instances []*Subgraph
 	lock sync.Mutex
@@ -64,7 +65,11 @@ func Load(ext_id int, dir, source string) (*Clone, error) {
 		source: source,
 		Instances: make([]*Subgraph, 0, count),
 	}
-	err = c.loadPr()
+	err = c.loadSelectionPr()
+	if err != nil {
+		return nil, err
+	}
+	err = c.loadConditionalPr()
 	if err != nil {
 		return nil, err
 	}
@@ -91,17 +96,34 @@ func (c *Clone) loadInstance(i int) (*Subgraph, error) {
 	return LoadSubgraph(c.source, p, false)
 }
 
-func (c *Clone) loadPr() (error) {
-	prBytes, err := ioutil.ReadFile(filepath.Join(c.dir, "pattern.pr"))
+func (c *Clone) loadSelectionPr() (error) {
+	pr, err := c.loadFloat(filepath.Join(c.dir, "pattern.pr"))
 	if err != nil {
 		return err
 	}
-	pr, err := strconv.ParseFloat(string(bytes.TrimSpace(prBytes)), 64)
-	if err != nil {
-		return err
-	}
-	c.pr = pr
+	c.selection_pr = pr
 	return nil
+}
+
+func (c *Clone) loadConditionalPr() (error) {
+	pr, err := c.loadFloat(filepath.Join(c.dir, "conditional.pr"))
+	if err != nil {
+		return err
+	}
+	c.conditional_pr = pr
+	return nil
+}
+
+func (c *Clone) loadFloat(path string) (float64, error) {
+	prBytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return 0, err
+	}
+	f, err := strconv.ParseFloat(string(bytes.TrimSpace(prBytes)), 64)
+	if err != nil {
+		return 0, err
+	}
+	return f, nil
 }
 
 func (c *Clone) ExtId() int {
@@ -112,8 +134,12 @@ func (c *Clone) Dir() string {
 	return c.dir
 }
 
-func (c *Clone) Pr() float64 {
-	return c.pr
+func (c *Clone) SelectionPr() float64 {
+	return c.selection_pr
+}
+
+func (c *Clone) ConditionalPr() float64 {
+	return c.conditional_pr
 }
 
 func (c *Clone) Img() (f *os.File, modtime time.Time, err error) {

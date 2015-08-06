@@ -90,7 +90,8 @@ func (f *Form) Decode(s *Session, u *User, c *clones.Clone, cid int, r *http.Req
 		CloneID: cid,
 		CloneExtID: c.ExtId(),
 		CloneDir: c.Dir(),
-		SelectionPr: c.Pr(),
+		SelectionPr: c.SelectionPr(),
+		ConditionalPr: c.ConditionalPr(),
 		Responses: make([]Response, 0, len(f.Questions)),
 	}
 	errors := make(schema.MultiError)

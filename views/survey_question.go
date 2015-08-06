@@ -18,35 +18,89 @@ import (
 var Questions = []models.Renderable{
 	&models.MultipleChoice{
 		Question: models.Question{
-			Name: "howare",
-			Question: "How are you today? This is a going to be a really really long question that you will have to spend a lot of time reading the point is to illustrate whether or not the CSS will work with a really long question. My guess is not?",
+			Name: "duplicated-code",
+			Question: "(1) Are the snippets above duplicated code?",
 			Required: true,
 		},
 		Answers: []models.Answer{
-			models.Answer{"ok", "I am feeling ok"},
-			models.Answer{"bad", "I am feeling bad"},
-			models.Answer{"great", "I am feeling GREAT"},
+			models.Answer{"yes", "Yes"},
+			models.Answer{"no", "No"},
 		},
 	},
 	&models.MultipleChoice{
 		Question: models.Question{
-			Name: "wizard",
-			Question: "Would you like to be a wizard?",
-			Required: true,
+			Name: "why-not-duplicated",
+			Question: "(2) If you answered *No* to question 1, why do you consider the above code not duplicated?",
+			Required: false,
 		},
 		Answers: []models.Answer{
-			models.Answer{"yes", "I would"},
-			models.Answer{"no", "I would not"},
-			models.Answer{"already", "I am already a wizard"},
+			models.Answer{"one-line", "It is only one line of code"},
+			models.Answer{"for-loop", "It seems to be just highlighting a for loop or iterator protocol"},
+			models.Answer{"string-builder", "It is just calls to StringBuilder"},
+			models.Answer{"standard-lib", "It is only calls to the standard library"},
+			models.Answer{"other", "Other"},
 		},
 	},
 	&models.FreeResponse{
 		Question: models.Question{
-			Name: "describe",
-			Question: "Please decribe your day:",
+			Name: "why-other-not-duplicated",
+			Question: "(3) If you answered *Other* to question 2, explain why:",
 			Required: false,
 		},
-		MaxLength: 500,
+		MaxLength: 1000,
+	},
+	&models.MultipleChoice{
+		Question: models.Question{
+			Name: "action-to-take",
+			Question: "(4) If you answered *Yes* to question 1, would you:",
+			Required: false,
+		},
+		Answers: []models.Answer{
+			models.Answer{"create-story", "Create a story to refactor this code"},
+			models.Answer{"comment", "Add a comment to consider refactoring on next change"},
+			models.Answer{"comment-no-refactor", "Add a note about duplicate code even if it can't be refactored"},
+			models.Answer{"ignore", "Ignore it"},
+			models.Answer{"action", "Take some other action"},
+		},
+	},
+	&models.FreeResponse{
+		Question: models.Question{
+			Name: "why-ignore",
+			Question: "(5) If you answered *Ignore It* to question 4, explain why:",
+			Required: false,
+		},
+		MaxLength: 1000,
+	},
+	&models.FreeResponse{
+		Question: models.Question{
+			Name: "why-ignore",
+			Question: "(6) If you answered *Take some other action* to question 4, explain why:",
+			Required: false,
+		},
+		MaxLength: 1000,
+	},
+	&models.MultipleChoice{
+		Question: models.Question{
+			Name: "pattern-characteristics",
+			Question: "(7) If you answered *Yes* to question 1, do you consider this pattern to be",
+			Required: false,
+		},
+		Answers: []models.Answer{
+			models.Answer{"example", "A good example of how to do something"},
+			models.Answer{"only-way", "The only way to do something"},
+			models.Answer{"best-way", "The best way to do something"},
+			models.Answer{"bad-way", "A bad way to do something"},
+			models.Answer{"incorrect", "An incorrect example of how to do something"},
+			models.Answer{"not-example", "None of the above"},
+		},
+	},
+	&models.FreeResponse{
+		Question: models.Question{
+			Name: "why-ignore",
+			Question: "(8) If you answered *Yes* to question 1, do you have any other thoughts on this code?",
+			Required: false,
+		},
+		MaxLength: 1000,
 	},
 }
 
