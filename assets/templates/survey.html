@@ -1,8 +1,33 @@
 {{template "header" "Survey Overview"}}
-<p>Your email: {{ .email }} </p>
-<p>Total Number of Groups: {{ .clone_count }}</p>
-<p>Total Number of Groups Reviewed: </p>
-<p>Number of Groups You Have Reviewed: </p>
-{{if .next}}<p><a href="{{.next}}">Review a Group of Duplicates</a></p>{{end}}
-<p><a href="/logout">logout</a></p>
+
+<div class="container well">
+    <table class="table">
+      <tr>
+          <td><strong>Your Email</strong></td>
+          <td><strong>{{ .email }}</strong></td>
+      </tr>
+      <tr>
+          <td><strong>Total Number of Groups</strong></td>
+          <td>{{ .clone_count }}</td>
+      </tr>
+
+      <tr>
+          <td><strong>Total Number of Groups Reviewed</strong></td>
+          <td>TODO</td>
+      </tr>
+
+      <tr>
+          <td><strong>Number of Groups You Have Reviewed</strong></td>
+          <td>TODO</td>
+      </tr>
+    </table>
+
+    {{if .next}}
+      <a href="{{.next}}" class="btn btn-primary">Review a Group of Duplicates</a>
+    {{end}}
+
+    <a href="/logout" class="btn btn-default" aria-label="Left Align"> <span class="glyphicon glyphicon-log-out" aria-hidden="true">  Logout</span></a>
+
+</div>
+
 {{template "footer"}}
