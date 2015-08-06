@@ -65,7 +65,7 @@ var Questions = []models.Renderable{
 	},
 	&models.FreeResponse{
 		Question: models.Question{
-			Name: "why-ignore",
+			Name: "why-ignore-clones",
 			Question: "(5) If you answered *Ignore It* to question 4, explain why:",
 			Required: false,
 		},
@@ -73,7 +73,7 @@ var Questions = []models.Renderable{
 	},
 	&models.FreeResponse{
 		Question: models.Question{
-			Name: "why-ignore",
+			Name: "why-take-action",
 			Question: "(6) If you answered *Take some other action* to question 4, explain why:",
 			Required: false,
 		},
@@ -96,7 +96,7 @@ var Questions = []models.Renderable{
 	},
 	&models.FreeResponse{
 		Question: models.Question{
-			Name: "why-ignore",
+			Name: "other-thoughts",
 			Question: "(8) If you answered *Yes* to question 1, do you have any other thoughts on this code?",
 			Required: false,
 		},
@@ -126,18 +126,18 @@ func (v *Views) SurveyQuestion(c *Context) {
 	err = v.tmpl.ExecuteTemplate(c.rw, "survey_question", map[string]interface{}{
 		"cid": cid,
 		"clone": v.clones[cid],
-		"form": f.HTML(map[string]error{}),
+		"form": f.HTML(map[string]error{}, map[string]string{}),
 	})
 	if err != nil {
 		log.Panic(err)
 	}
 }
 
-func (v *Views) ErrorSurveyQuestion(c *Context, cid int, f *models.Form, a *models.SurveyAnswer, errs schema.MultiError) {
+func (v *Views) ErrorSurveyQuestion(c *Context, cid int, f *models.Form, a *models.SurveyAnswer, errs schema.MultiError, answers map[string]string) {
 	err := v.tmpl.ExecuteTemplate(c.rw, "survey_question", map[string]interface{}{
 		"cid": cid,
 		"clone": v.clones[cid],
-		"form": f.HTML(errs),
+		"form": f.HTML(errs, answers),
 	})
 	if err != nil {
 		log.Panic(err)
@@ -163,13 +163,13 @@ func (v *Views) DoSurveyQuestion(c *Context) {
 		SubmitText: "Submit Answers",
 		Questions: Questions,
 	}
-	answer, ferr, err := f.Decode(c.s, c.u, v.clones[cid], cid, c.r)
+	answer, ferr, answers, err := f.Decode(c.s, c.u, v.clones[cid], cid, c.r)
 	if err != nil {
 		c.rw.WriteHeader(400)
 		c.rw.Write([]byte("malformed form submitted"))
 		return
 	} else if len(ferr) > 0 {
-		v.ErrorSurveyQuestion(c, cid, f, answer, ferr)
+		v.ErrorSurveyQuestion(c, cid, f, answer, ferr, answers)
 		return
 	}
 	var next string

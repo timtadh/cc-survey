@@ -57,6 +57,12 @@ code {
 	background-color: #a0a0a0;
 }
 
+form .error {
+	float: right;
+	color: red;
+	font-weight: 900;
+}
+
 form.survey, .instructions {
 	width: 50%;
 	margin: auto;
