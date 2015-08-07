@@ -34,8 +34,10 @@ code {
 }
 
 .code pre.java {
+	/*
 	float: left;
 	width: 50%;
+	*/
 }
 
 .code pre.jimple {
