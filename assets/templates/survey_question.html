@@ -23,7 +23,46 @@
 </div>
 <div class="center_box">
 	<div class="instructions">
-		Please answer the following questions about the code snippets displayed above.
+		<p>Please answer the following questions about the code snippets
+		displayed above.</p>
+
+		<p>As a reminder, these snippets may or may not represent duplicated
+		code or "code clones". The purpose of looking for examining code
+		clones is to determine if there are any problems associated with them.
+		Problems associated with duplicate code includes (but is not limited
+		to):</p>
+
+		<ul>
+			<li>
+				Updates or bug fixes which should be applied to every duplicate
+				are only applied to some of the duplicates.
+			</li>
+			<li>
+				Duplicates may be incorrect due to being incorrectly copied
+				from some other context.
+			</li>
+			<li>
+				Duplicates can create more work when making futures changes such
+				as adding features or fixing bugs.
+			</li>
+			<li>
+				Duplicates may represent a convention which must be applied
+				consistently but is not always applied correctly.
+			</li>
+			<li>
+				Etc...
+			</li>
+		</ul>
+		
+		<p>Do to the nature of the clone detection mechanism employed sometimes
+		duplications are found at the byte code level which are not present in
+		the source code. If you believe this to be the case answer no to
+		question (1) and additionally answer questions (3) and (4). There may be
+		other legitimate reasons you feel the code is not really duplicated
+		answer No in these cases as well.</p>
+
+		<p>
+		</p>
 	</div>
 	{{.form}}
 </div>

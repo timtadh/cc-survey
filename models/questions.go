@@ -76,7 +76,7 @@ var formTmpl = template.Must(template.New("form").Parse(
 `<form class="survey" action="{{.form.Action}}" method="post">{{$e := .errors}}{{$a := .answers}}{{range $q := .form.Questions}}
 {{$q.HTML (index $e $q.Key) (index $a $q.Key)}}{{end}}
 <input type="hidden" name="csrf" value="{{.form.Csrf}}"/>
-<div class="submit"><input type="submit" value="{{.form.SubmitText}}"/></div>
+<div><input class="submit" type="submit" value="{{.form.SubmitText}}"/></div>
 </form>`))
 
 

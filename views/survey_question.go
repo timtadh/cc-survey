@@ -29,8 +29,21 @@ var Questions = []models.Renderable{
 	},
 	&models.MultipleChoice{
 		Question: models.Question{
+			Name: "pattern-usefulness",
+			Question: "(2) Was it (potentially) useful to see this group?",
+			Required: true,
+		},
+		Answers: []models.Answer{
+			models.Answer{"not-useful", "Not useful"},
+			models.Answer{"slightly-useful", "Slightly useful"},
+			models.Answer{"moderately-useful", "Moderately useful"},
+			models.Answer{"extremely-useful", "Extremely useful"},
+		},
+	},
+	&models.MultipleChoice{
+		Question: models.Question{
 			Name: "why-not-duplicated",
-			Question: "(2) If you answered *No* to question 1, why do you consider the above code not duplicated?",
+			Question: "(3) If you answered *No* to question 1, why do you consider the above code not duplicated?",
 			Required: false,
 		},
 		Answers: []models.Answer{
@@ -45,7 +58,7 @@ var Questions = []models.Renderable{
 	&models.FreeResponse{
 		Question: models.Question{
 			Name: "why-other-not-duplicated",
-			Question: "(3) If you answered *Other* to question 2, explain why:",
+			Question: "(4) If you answered *Other* to question 3, explain why:",
 			Required: false,
 		},
 		MaxLength: 1000,
@@ -53,7 +66,7 @@ var Questions = []models.Renderable{
 	&models.MultipleChoice{
 		Question: models.Question{
 			Name: "action-to-take",
-			Question: "(4) If you answered *Yes* to question 1, would you:",
+			Question: "(5) If you answered *Yes* to question 1, would you:",
 			Required: false,
 		},
 		Answers: []models.Answer{
@@ -67,15 +80,15 @@ var Questions = []models.Renderable{
 	&models.FreeResponse{
 		Question: models.Question{
 			Name: "why-ignore-clones",
-			Question: "(5) If you answered *Ignore It* to question 4, explain why:",
+			Question: "(6) If you answered *Ignore It* to question 5, explain why:",
 			Required: false,
 		},
 		MaxLength: 1000,
 	},
 	&models.FreeResponse{
 		Question: models.Question{
-			Name: "why-take-action",
-			Question: "(6) If you answered *Take some other action* to question 4, explain why:",
+			Name: "why-take-other-action",
+			Question: "(7) If you answered *Take some other action* to question 5, explain why:",
 			Required: false,
 		},
 		MaxLength: 1000,
@@ -83,23 +96,31 @@ var Questions = []models.Renderable{
 	&models.MultipleChoice{
 		Question: models.Question{
 			Name: "pattern-characteristics",
-			Question: "(7) If you answered *Yes* to question 1, do you consider this pattern to be",
+			Question: "(8) If you answered *Yes* to question 1, do you consider this pattern to be",
 			Required: false,
 		},
 		Answers: []models.Answer{
-			models.Answer{"example", "A good example of how to do something"},
-			models.Answer{"only-way", "The only way to do something"},
-			models.Answer{"best-way", "The best example of how to do something"},
-			models.Answer{"fine-way", "The neither a good or bad example of how to do something"},
-			models.Answer{"bad-way", "A bad example of how to do something"},
-			models.Answer{"incorrect", "An incorrect example of how to do something"},
+			models.Answer{"example", "A good example of how to do some task"},
+			models.Answer{"only-way", "The only way to do some task"},
+			models.Answer{"best-way", "The best example of how to do some task"},
+			models.Answer{"fine-way", "The neither a good or bad example of how to do some task"},
+			models.Answer{"bad-way", "A bad example of how to do some task"},
+			models.Answer{"incorrect", "An incorrect example of how to do some task"},
 			models.Answer{"not-example", "None of the above"},
 		},
 	},
 	&models.FreeResponse{
 		Question: models.Question{
+			Name: "why-an-example",
+			Question: "(9) If you answered any thing but *None of the above* to question 8, summarize the nature of the task?",
+			Required: false,
+		},
+		MaxLength: 1000,
+	},
+	&models.FreeResponse{
+		Question: models.Question{
 			Name: "other-thoughts",
-			Question: "(8) If you answered *Yes* to question 1, do you have any other thoughts on this code?",
+			Question: "(10) If you answered *Yes* to question 1, do you have any other thoughts on this code?",
 			Required: false,
 		},
 		MaxLength: 1000,
