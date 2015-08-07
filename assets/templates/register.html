@@ -1,58 +1,57 @@
 {{template "header" "Register"}}
-<form action="{{.target}}" method="post">
-	{{if .errors}}{{if .errors.register}}
-	<p>
-		<span class="error"> {{.errors.register}} </span>
-	</p>
-	{{end}}{{end}}
-	<p>
-	<p>
-		<label for="email">
-			Email:
-			<input type="text" id="email" name="email" {{if .form}}{{if .form.Email}} value="{{.form.Email}}" {{end}}{{end}} >
-			</input>
-			{{if .errors}}{{if .errors.email}}
-			<span class="error"> {{.errors.email}} </span>
-			{{end}}{{end}}
-		</label>
-	</p>
-	<p>
-		<label for="password">
-			Password
-			<input type="password" id="password" name="password">
-			</input>
-			{{if .errors}}{{if .errors.password}}
-			<span class="error"> {{.errors.password}} </span>
-			{{end}}{{end}}
-		</label>
-	</p>
-	<p>
-		<label for="confirm_password">
-			Confirm Password:
-			<input type="password" id="confirm_password" name="confirm_password">
-			</input>
-			{{if .errors}}{{if .errors.confirm_password}}
-			<span class="error"> {{.errors.confirm_password}} </span>
-			{{end}}{{end}}
-		</label>
-	</p>
-	{{if .errors}}{{if .errors.consent}}
-	<p>
-		<span class="error"> {{.errors.consent}} </span>
-	</p>
-	{{end}}{{end}}
-	<p>
-		<label for="consent">
-			<input type="checkbox" id="consent" name="consent" value="iagree" 
-				{{if .form}} {{if eq .form.Consent "iagree"}} checked="true" {{end}} {{end}}
-			>
-			I understand that (only) aggregate and anonymized answers to this survey may
-			be shared with management or the general public.
-			</input>
-		</label>
-	</p>
-	<input type="hidden" id="csrf" name="csrf" value="{{.csrf}}"></input>
-	<input type="submit" value="register"></input>
-</form>
+<div class="center_box">
+	<h1 class="title">Register</h1>
+	<hr/>
+	<form class="register" action="{{.target}}" method="post">
+		{{if .errors}}{{if .errors.register}}
+		<div>
+			<span class="error"> {{.errors.register}} </span>
+		</div>
+		{{end}}{{end}}
+		<div>
+			<label for="email">
+				Email:
+				<input type="text" id="email" name="email" {{if .form}}{{if .form.Email}} value="{{.form.Email}}" {{end}}{{end}} >
+				</input>
+				{{if .errors}}{{if .errors.email}}
+				<span class="error"> {{.errors.email}} </span>
+				{{end}}{{end}}
+			</label>
+		</div>
+		<div>
+			<label for="password">
+				Password
+				<input type="password" id="password" name="password">
+				</input>
+				{{if .errors}}{{if .errors.password}}
+				<span class="error"> {{.errors.password}} </span>
+				{{end}}{{end}}
+			</label>
+		</div>
+		<div>
+			<label for="confirm_password">
+				Confirm Password:
+				<input type="password" id="confirm_password" name="confirm_password">
+				</input>
+				{{if .errors}}{{if .errors.confirm_password}}
+				<span class="error"> {{.errors.confirm_password}} </span>
+				{{end}}{{end}}
+			</label>
+		</div>
+		<div>
+			<label for="consent">
+				<input type="checkbox" id="consent" name="consent" value="iagree"{{if .form}}{{if eq .form.Consent "iagree"}} checked="true"{{end}}{{end}}>
+				I understand that (only) aggregate and anonymized answers to this survey may
+				be shared with management or the general public.
+				</input>
+				{{if .errors}}{{if .errors.consent}}<span class="error"> {{.errors.consent}} </span>{{end}}{{end}}
+			</label>
+		</div>
+		<div>
+			<input class="submit" type="submit" value="register"></input>
+		</div>
+		<input type="hidden" id="csrf" name="csrf" value="{{.csrf}}"></input>
+	</form>
+</div>
 {{template "footer"}}
 

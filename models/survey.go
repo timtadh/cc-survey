@@ -37,6 +37,16 @@ type SurveyStore interface {
 	Do(func(*Survey) error) error
 }
 
+func (s *Survey) CountAnswers(email string) int {
+	var count int
+	for _, a := range s.Answers {
+		if a.UserEmail == email {
+			count++
+		}
+	}
+	return count
+}
+
 func (s *Survey) Next() (cid int, c *clones.Clone) {
 	cidT, err := s.Unanswered.Random()
 	if err != nil {

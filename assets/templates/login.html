@@ -1,33 +1,39 @@
 {{template "header" "Login"}}
-<form action="{{.target}}" method="post">
-	{{if .errors}}{{if .errors.login}}
-	<p>
-		<span class="error"> {{.errors.login}} </span>
-	</p>
-	{{end}}{{end}}
-	<p>
-		<label for="email">
-			Email:
-			<input type="text" id="email" name="email" {{if .form}}{{if .form.Email}} value="{{.form.Email}}" {{end}}{{end}} >
-			</input>
-			{{if .errors}}{{if .errors.email}}
-			<span class="error"> {{.errors.email}} </span>
-			{{end}}{{end}}
-		</label>
-	</p>
-	<p>
-		<label for="password">
-			Password
-			<input type="password" id="password" name="password">
-			</input>
-			{{if .errors}}{{if .errors.password}}
-			<span class="error"> {{.errors.password}} </span>
-			{{end}}{{end}}
-		</label>
-	</p>
-	<input type="hidden" id="csrf" name="csrf" value="{{.csrf}}"></input>
-	<input type="submit" value="login"></input>
-</form>
+<div class="center_box">
+	<h1 class="title">Login</h1>
+	<hr/>
+	<form class="login" action="{{.target}}" method="post">
+		{{if .errors}}{{if .errors.login}}
+		<div>
+			<span class="error"> {{.errors.login}} </span>
+		</div>
+		{{end}}{{end}}
+		<div>
+			<label for="email">
+				Email:
+				<input type="text" id="email" name="email" {{if .form}}{{if .form.Email}} value="{{.form.Email}}" {{end}}{{end}} >
+				</input>
+				{{if .errors}}{{if .errors.email}}
+				<span class="error"> {{.errors.email}} </span>
+				{{end}}{{end}}
+			</label>
+		</div>
+		<div>
+			<label for="password">
+				Password
+				<input type="password" id="password" name="password">
+				</input>
+				{{if .errors}}{{if .errors.password}}
+				<span class="error"> {{.errors.password}} </span>
+				{{end}}{{end}}
+			</label>
+		</div>
+		<div>
+			<input class="submit" type="submit" value="Login"></input>
+		</div>
+		<input type="hidden" id="csrf" name="csrf" value="{{.csrf}}"></input>
+	</form>
+</div>
 {{template "footer"}}
 
 

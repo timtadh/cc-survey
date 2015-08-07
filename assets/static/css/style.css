@@ -1,10 +1,28 @@
 
 h1.title {
-	margin: 12px;
+	margin-top: 12px;
+	margin-bottom: 12px;
+}
+
+.login-link {
+	text-align: right;
+}
+
+.reg-link {
+	float: left;
+}
+
+.center_box {
+	width: 860px;
+	margin: auto;
+}
+
+.clone {
+	margin: 2em;
 }
 
 .instance {
-	margin: 2em;
+	margin-bottom: 2em;
 	border: 1px dotted gray;
 }
 
@@ -49,6 +67,7 @@ code {
 
 .code pre .line .number {
 	background-color: #f0f0f0;
+	padding-left: 1em;
 }
 
 .code pre .line .highlight {
@@ -56,7 +75,8 @@ code {
 }
 
 .code pre .line .number.highlight {
-	background-color: #a0a0a0;
+	background-color: #f0f0f0;
+	/* background-color: #a0a0a0; */
 }
 
 form .error {
@@ -66,8 +86,6 @@ form .error {
 }
 
 form.survey, .instructions {
-	width: 50%;
-	margin: auto;
 }
 
 .instructions {
@@ -99,3 +117,29 @@ form.survey .submit {
 	margin-left: 1em;
 }
 
+form.login, form.register {
+	border: 1px dotted gray;
+	background-color: #fcfcfc;
+}
+
+form.login div, form.register div {
+	margin: 1em;
+}
+
+form.login .error, form.register .error {
+	float: none;
+	margin-left: 2em;
+	color: red;
+	font-weight: 900;
+}
+
+
+form.login .submit {
+}
+
+.submit {
+	padding-top: 5px;
+	padding-bottom: 5px;
+	padding-left: 1em;
+	padding-right: 1em;
+}

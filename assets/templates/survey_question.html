@@ -1,5 +1,7 @@
 {{template "header" (printf "Survey Question %v" .cid)}}
 <div class="clone">
+	<h1 class="title">{{(printf "Survey Question %v" .cid)}}</h1>
+	<hr/>
 	{{$cid := .cid}}
 	{{range $idx, $inst := .clone.Instances}}
 	<div class="instance">
@@ -19,8 +21,10 @@
 	</div>
 	{{end}}
 </div>
-<div class="instructions">
-	Please answer the following questions about the code snippets displayed above.
+<div class="center_box">
+	<div class="instructions">
+		Please answer the following questions about the code snippets displayed above.
+	</div>
+	{{.form}}
 </div>
-{{.form}}
 {{template "footer"}}

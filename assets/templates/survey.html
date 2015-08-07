@@ -1,8 +1,25 @@
 {{template "header" "Survey Overview"}}
-<p>Your email: {{ .email }} </p>
-<p>Total Number of Groups: {{ .clone_count }}</p>
-<p>Total Number of Groups Reviewed: </p>
-<p>Number of Groups You Have Reviewed: </p>
-{{if .next}}<p><a href="{{.next}}">Review a Group of Duplicates</a></p>{{end}}
-<p><a href="/logout">logout</a></p>
+
+<div class="center_box">
+	<h1 class="title">Survey Overview</h1>
+	<hr/>
+	<p>Your email: {{ .email }}, <a href="/logout">logout</a></p>
+	<p>Total Number of Groups: {{ .clone_count }}</p>
+	<p>Total Number of Groups Reviewed: {{ .answer_count }}</p>
+	<p>Number of Groups You Have Reviewed: {{ .my_answer_count }}</p>
+
+	<p>
+	As you know, tools exist that help develops to find code ‘clones’ (duplicated
+	code) in a code base. The clones are examined to determine if there are
+	problems associated with them that require actions such as refactoring or
+	updating of context-specific identifiers. In the exercise to follow, you will
+	be asked to examine a number of possible examples of clones and to answer some
+	basic questions about them. This will help us to better understand what kinds
+	of clones are most helpful to identify.
+	</p>
+
+
+	{{if .next}}<p><a href="{{.next}}">Review a Group of (Potential) Duplicates</a></p>{{end}}
+</div>
+
 {{template "footer"}}
