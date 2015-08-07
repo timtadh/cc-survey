@@ -38,6 +38,8 @@ Options
     -a, --assets=<path>                 path to asset dir
     -c, --clones=<path>                 path to clones dir
     -s, --src=<path>                    path to the source
+    --private-ssl-key=<path>
+    --ssl-cert=<path>
 `
 
 func Usage(code int) {
@@ -53,7 +55,8 @@ func main() {
 	_, optargs, err := getopt.GetOpt(
 		os.Args[1:],
 		"hl:a:c:s:",
-		[]string{ "help", "listen=", "assets", "clones=", "src=" },
+		[]string{ "help", "listen=", "assets", "clones=", "src=",
+		          "private-ssl-key=", "ssl-cert=" },
 	)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error parsing command line flags", err)
@@ -64,6 +67,8 @@ func main() {
 	assets := ""
 	clones := ""
 	source := ""
+	ssl_key := ""
+	ssl_cert := ""
 	for _, oa := range optargs {
 		switch oa.Opt() {
 		case "-h", "--help":
@@ -89,6 +94,35 @@ func main() {
 				fmt.Fprintf(os.Stderr, "source path was bad: %v", err)
 				Usage(ErrorCodes["opts"])
 			}
+		case "--private-ssl-key":
+			ssl_key, err = filepath.Abs(oa.Arg())
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "private-ssl-key path was bad: %v", err)
+				Usage(ErrorCodes["opts"])
+			}
+			_, err = os.Stat(ssl_key)
+			if os.IsNotExist(err) {
+				fmt.Fprintf(os.Stderr, "private-ssl-key path does not exist. %v", ssl_key)
+				Usage(ErrorCodes["opts"])
+			} else if err != nil {
+				fmt.Fprintf(os.Stderr, "private-ssl-key path was bad: %v", err)
+				Usage(ErrorCodes["opts"])
+			}
+		case "--ssl-cert":
+			log.Println("ssl-cert", oa.Arg())
+			ssl_cert, err = filepath.Abs(oa.Arg())
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "ssl-cert path was bad: %v", err)
+				Usage(ErrorCodes["opts"])
+			}
+			_, err = os.Stat(ssl_cert)
+			if os.IsNotExist(err) {
+				fmt.Fprintf(os.Stderr, "ssl-cert path does not exist. %v", ssl_cert)
+				Usage(ErrorCodes["opts"])
+			} else if err != nil {
+				fmt.Fprintf(os.Stderr, "ssl-cert path was bad: %v", err)
+				Usage(ErrorCodes["opts"])
+			}
 		default:
 			fmt.Fprintf(os.Stderr, "Unknown flag '%v'\n", oa.Opt())
 			Usage(ErrorCodes["opts"])
@@ -110,6 +144,11 @@ func main() {
 		Usage(ErrorCodes["opts"])
 	}
 
+	if (ssl_key == "" && ssl_cert != "") || (ssl_key != "" && ssl_cert == "") {
+		fmt.Fprintln(os.Stderr, "To use ssl you must supply key and cert")
+		Usage(ErrorCodes["opts"])
+	}
+
 	handler := views.Routes(assets, clones, source)
 
 	server := &http.Server{
@@ -124,9 +163,17 @@ func main() {
 		ErrorLog: nil,
 	}
 
-	err = server.ListenAndServe()
-	if err != nil {
-		log.Fatal(err)
+	if ssl_key == "" {
+		err = server.ListenAndServe()
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		log.Println(ssl_cert, ssl_key)
+		err = server.ListenAndServeTLS(ssl_cert, ssl_key)
+		if err != nil {
+			log.Panic(err)
+		}
 	}
 }
 
