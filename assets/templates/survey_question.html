@@ -1,6 +1,12 @@
 {{template "header" (printf "Survey Question %v" .cid)}}
 <div class="clone">
 	<h1 class="title">{{(printf "Survey Question %v" .cid)}}</h1>
+	{{if .form_error}}
+	<div class="error">
+		There was a validation error when you submitted the form. Please
+		correct it and re-submit.
+	</div>
+	{{end}}
 	<hr/>
 	{{$cid := .cid}}
 	{{range $idx, $inst := .clone.Instances}}
@@ -23,10 +29,17 @@
 </div>
 <div class="center_box">
 	<div class="instructions">
-		<p>Please answer the following questions about the code snippets
-		displayed above.</p>
+		<h2>Please answer the following questions about the code fragments
+			displayed above.</h2>
+		{{if .form_error}}
+		<div class="error">
+			There was a validation error when you submitted the form. Please
+			correct it and re-submit.
+		</div>
+		{{end}}
+		<hr/>
 
-		<p>As a reminder, these snippets may or may not represent duplicated
+		<p>As a reminder, these fragments may or may not represent duplicated
 		code or "code clones". The purpose of looking for examining code
 		clones is to determine if there are any problems associated with them.
 		Problems associated with duplicate code includes (but is not limited
@@ -63,8 +76,9 @@
 		picture does not provide enough detail and context. That is it is too
 		general.</p>
 
-		<p>
-		</p>
+		<p>Don't remember what exactly a code clone is? You can review the
+		<a href="https://docs.google.com/presentation/d/10vEHHFtrKtNBL-OrYfJ2oAujDI6TbyRn0YFSBG9pyG8/edit?usp=sharing">presentation</a>
+		I gave at the beginning of the survey.</p>
 	</div>
 	{{.form}}
 </div>

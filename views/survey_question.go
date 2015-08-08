@@ -19,7 +19,7 @@ var Questions = []models.Renderable{
 	&models.MultipleChoice{
 		Question: models.Question{
 			Name: "duplicated-code",
-			Question: "(1) Are the snippets above duplicated code?",
+			Question: "(1) Do the highlighted portions of the code fragments, in conjunction with the associated graph, represent duplicated, similar or cloned code?",
 			Required: true,
 		},
 		Answers: []models.Answer{
@@ -150,6 +150,7 @@ func (v *Views) SurveyQuestion(c *Context) {
 		"cid": cid,
 		"clone": v.clones[cid],
 		"form": f.HTML(map[string]error{}, map[string]string{}),
+		"form_error": false,
 	})
 	if err != nil {
 		log.Panic(err)
@@ -161,6 +162,7 @@ func (v *Views) ErrorSurveyQuestion(c *Context, cid int, f *models.Form, a *mode
 		"cid": cid,
 		"clone": v.clones[cid],
 		"form": f.HTML(errs, answers),
+		"form_error": true,
 	})
 	if err != nil {
 		log.Panic(err)

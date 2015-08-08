@@ -57,7 +57,7 @@ var freeTmpl = template.Must(template.New("freeResponse").Parse(
 		{{.question.Question.Question}} {{if .error}} <div class="error">{{.error}}</div> {{end}}
 	</div>
 	<div class="answer">
-		<textarea name="{{.question.Name}}" maxlength={{.question.MaxLength}} cols="60" rows="6">{{if .answer}}{{.answer}}{{end}}</textarea>
+		<textarea name="{{.question.Name}}" maxlength={{.question.MaxLength}}>{{if .answer}}{{.answer}}{{end}}</textarea>
 	</div>
 </label>`))
 

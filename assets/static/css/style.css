@@ -13,12 +13,20 @@ h1.title {
 }
 
 .center_box {
-	width: 860px;
+	max-width: 860px;
 	margin: auto;
 }
 
-.clone {
-	margin: 2em;
+@media screen and (max-width: 1200px) {
+	.clone {
+		max-width: 98%;
+		margin: auto;
+	}
+}
+@media screen and (min-width: 1200px) {
+	.clone {
+		margin: 12px;
+	}
 }
 
 .instance {
@@ -49,6 +57,7 @@ code {
 .code pre {
 	border: 1px solid gray;
 	margin: 1em;
+	overflow: auto;
 }
 
 .code pre.java {
@@ -79,10 +88,13 @@ code {
 	/* background-color: #a0a0a0; */
 }
 
-form .error {
-	float: right;
+.error {
 	color: red;
 	font-weight: 900;
+}
+
+form .error {
+	float: right;
 }
 
 form.survey, .instructions {
@@ -95,6 +107,7 @@ form.survey, .instructions {
 form.survey {
 	border: 1px dotted gray;
 	background-color: #fcfcfc;
+	padding: 1em;
 }
 
 form.survey .question {
@@ -103,6 +116,7 @@ form.survey .question {
 
 form.survey .answer {
 	margin-left: 3em;
+	margin-right: 3em;
 }
 
 form.survey .question.required::after {
@@ -117,6 +131,11 @@ form.survey .submit {
 	margin-left: 1em;
 }
 
+form.survey textarea {
+	width: 100%;
+	height: 6em;
+}
+
 form.login, form.register {
 	border: 1px dotted gray;
 	background-color: #fcfcfc;
@@ -129,8 +148,6 @@ form.login div, form.register div {
 form.login .error, form.register .error {
 	float: none;
 	margin-left: 2em;
-	color: red;
-	font-weight: 900;
 }
 
 
