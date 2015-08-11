@@ -1,0 +1,159 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import json
+
+import optutils
+
+from analysis import stats
+
+
+def load_answers(path):
+    with open(path) as f:
+        return [
+            json.loads(line)
+            for line in f
+        ]
+
+def prs(answers):
+    return [
+        line['ConditionalPr']
+        for line in answers
+    ]
+
+def load_conditional_interval(base, clone_id):
+    path = os.path.join(base, str(clone_id), 'conditional.interval.pr')
+    with open(path) as f:
+        return [
+            float(line.strip())
+            for line in f
+        ]
+
+def prs_up(answers, base):
+    return [
+        load_conditional_interval(base, line['CloneExtID'])[1]
+        for line in answers
+    ]
+
+def prs_down(answers, base):
+    return [
+        load_conditional_interval(base, line['CloneExtID'])[0]
+        for line in answers
+    ]
+
+def question(answers, n):
+    return [
+        line['Responses'][n]['Answer']
+        for line in answers
+    ]
+
+@optutils.main(
+'analyze -c <clones> -a <answers> -q <questions>',
+'''
+analyze stuff
+
+Options
+-h, --help                              show this message
+-c, --clones=<path>                     path to clones
+-a, --answers=<path>                    path to answers
+                                        default: clones/answers
+-q, --questions=<path>                  path to questions
+                                        default: clones/questions
+''',
+'hc:a:q:',
+['help'],
+)
+def main(argv, util, parser):
+
+    @util.command(
+        util.short_msg + ' estimators -q 0',
+        '''
+        compute the sample estimates: tau, n, mu
+
+        -q, --question=<int>                  which question to est
+        ''',
+        'hq:',
+        ['help','question='],
+    )
+    def estimators(argv, util, parser, A, P):
+        quest = 0
+        opts, args = parser(argv)
+        for opt, arg in opts:
+            if opt in ('-h', '--help',):
+                util.usage()
+            elif opt in ('-q', '--question',):
+                quest = util.parse_int(arg) - 1
+            else:
+                util.log("unknown option %s" % (opt))
+                util.usage(1)
+
+        if len(args) != 0:
+            util.log("extra args ... %s" % str(args))
+            util.usage(1)
+
+        if quest < 0 or quest >= len(A[0]['Responses']):
+            util.log("invalid question #")
+            util.usage(1)
+
+        q = question(A, quest)
+        Q = stats.Estimators(q, P)
+        print 'QUESTION', quest + 1
+        print
+        print 'prs', [round(p, 3) for p in P.prs]
+        print 'pis', [round(p, 3) for p in P.pis]
+        print
+        print 'answers', Q.ys
+        print
+        print 'tau', Q.tau_hat
+        print 'std(tau)', Q.std_tau_hat
+        print 'interval(tau)', Q.interval_tau_hat
+        print
+        print 'n', Q.n_hat
+        print 'std(n)', Q.std_n_hat
+        print 'interval(n)', Q.interval_n_hat
+        print
+        print 'mu', Q.mu_hat
+        print 'std(mu)', Q.std_mu_hat
+        print 'interval(mu)', Q.interval_mu_hat
+
+    clones = None
+    answers = None
+    questions = None
+    opts, args = parser(argv)
+    for opt, arg in opts:
+        if opt in ('-h', '--help',):
+            util.usage()
+        elif opt in ('-c', '--clones',):
+            clones = util.assert_file_exists(arg)
+        elif opt in ('-a', '--answers',):
+            answers = util.assert_file_exists(arg)
+        elif opt in ('-q', '--questions',):
+            questions = util.assert_file_exists(arg)
+        else:
+            util.log("unknown option %s" % (opt))
+            util.usage(1)
+
+    if clones is None:
+        util.log("must supply a base path to the clones")
+        util.usage(1)
+
+    if answers is None:
+        answers = util.assert_file_exists(os.path.join(clones, 'answers'))
+
+    if questions is None:
+        questions = util.assert_file_exists(os.path.join(clones, 'questions'))
+
+    A = load_answers(answers)
+    #P = stats.SampleProbabilities(prs(A))
+    P = stats.SampleProbabilities(prs_up(A, clones))
+
+    if len(args) == 0:
+        args = ['estimators', '-q', '1']
+
+    util.run_command(args, A, P)
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
+
