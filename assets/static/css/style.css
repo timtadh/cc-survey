@@ -160,3 +160,13 @@ form.login .submit {
 	padding-left: 1em;
 	padding-right: 1em;
 }
+
+.response {
+	border: 1px dotted gray;
+	background-color: #fcfcfc;
+	margin-bottom: 2em;
+}
+
+.response .answer {
+	margin-top: 1em;
+}

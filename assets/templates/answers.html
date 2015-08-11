@@ -1,0 +1,12 @@
+{{template "header" "Survey Overview"}}
+
+<div class="center_box">
+	<h1 class="title">Survey Overview</h1>
+	<hr/>
+	<p>Total Number of Groups: {{ .clone_count }}</p>
+	<p>Total Number of Groups Reviewed: {{ .answer_count }}</p>
+
+	{{if .next}}<p><a href="{{.next}}">First answer</a></p>{{end}}
+</div>
+
+{{template "footer"}}

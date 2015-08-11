@@ -16,3 +16,15 @@
 [submodule "src/github.com/timtadh/data-structures"]
 	path = src/github.com/timtadh/data-structures
 	url = git@github.com:timtadh/data-structures
+[submodule "src/github.com/russross/blackfriday"]
+	path = src/github.com/russross/blackfriday
+	url = git@github.com:russross/blackfriday.git
+[submodule "src/github.com/shurcooL/sanitized_anchor_name"]
+	path = src/github.com/shurcooL/sanitized_anchor_name
+	url = git@github.com:shurcooL/sanitized_anchor_name.git
+[submodule "src/golang.org/x/net"]
+	path = src/golang.org/x/net
+	url = git@github.com:golang/net
+[submodule "src/github.com/microcosm-cc/bluemonday"]
+	path = src/github.com/microcosm-cc/bluemonday
+	url = git@github.com:microcosm-cc/bluemonday.git

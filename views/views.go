@@ -95,6 +95,29 @@ func Routes(assetPath, clonesPath, sourcePath string) http.Handler {
 	return mux
 }
 
+func AnswerRoutes(assetPath, clonesPath, sourcePath string) http.Handler {
+	mux := httprouter.New()
+	assetPath = filepath.Clean(assetPath)
+	v := &Views{
+		assetPath: assetPath,
+		clonesPath: filepath.Clean(clonesPath),
+		sourcePath: filepath.Clean(sourcePath),
+		sessions: mem.NewSessionMapStore("session"),
+		users: nil,
+		decoder: schema.NewDecoder(),
+	}
+	mux.GET("/", v.Context(v.Answers))
+	mux.GET("/answers/:answer", v.Context(v.Answer))
+
+	mux.GET("/clones/:clone/pattern.png", v.Context(v.PatternImg))
+	mux.GET("/clones/:clone/instances/:instance/embedding.png", v.Context(v.InstanceImg))
+
+	mux.ServeFiles("/static/*filepath", http.Dir(filepath.Join(assetPath, "static")))
+
+	v.Init()
+	return mux
+}
+
 func (v *Views) Init() {
 	v.loadTemplates()
 	v.loadClones()

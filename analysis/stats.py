@@ -52,7 +52,7 @@ class Estimators(object):
     def __init__(self, ys, sample_probabilities):
         self.ys = ys
         self.p = sample_probabilities
-        self.a = norm.ppf(.95)
+        self.a = norm.ppf(.90)
         self._tau_hat = None
         self._var_tau_hat = None
         self._n_hat = None
