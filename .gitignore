@@ -12,6 +12,8 @@ memprof
 *.out
 *.pprof
 *.pem
+*.tar.gz
+fsm-*
 
 example/
 jgit/
