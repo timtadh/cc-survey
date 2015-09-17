@@ -3,11 +3,15 @@
 import os
 import sys
 import json
+import random
 
+import numpy as np
 import optutils
 
 from analysis import stats
 
+
+random.seed(os.urandom(8))
 
 def load_answers(path):
     with open(path) as f:
@@ -42,11 +46,17 @@ def prs_down(answers, base):
         for line in answers
     ]
 
-def question(answers, n):
-    return [
-        line['Responses'][n]['Answer']
-        for line in answers
-    ]
+def question(answers, n, invert=False):
+    if invert:
+        return [
+            abs(1 - line['Responses'][n]['Answer'])
+            for line in answers
+        ]
+    else:
+        return [
+            line['Responses'][n]['Answer']
+            for line in answers
+        ]
 
 @optutils.main(
 'analyze -c <clones> -a <answers> -q <questions>',
@@ -55,14 +65,15 @@ analyze stuff
 
 Options
 -h, --help                              show this message
--c, --clones=<path>                     path to clones
+-s, --sample-size=<int>                 the sample size (required)
+-c, --clones=<path>                     path to clones (required)
 -a, --answers=<path>                    path to answers
                                         default: clones/answers
 -q, --questions=<path>                  path to questions
                                         default: clones/questions
 ''',
-'hc:a:q:',
-['help'],
+'hs:c:a:q:',
+['help', 'sample-size=', 'clones=', 'answers=', 'questions='],
 )
 def main(argv, util, parser):
 
@@ -72,18 +83,26 @@ def main(argv, util, parser):
         compute the sample estimates: tau, n, mu
 
         -q, --question=<int>                  which question to est
+        -c, --confident=<float>               confidence (.95 default)
+        --invert                              invert the values (for proportion)
         ''',
-        'hq:',
-        ['help','question='],
+        'hq:c:',
+        ['help','question=', 'confidence=', 'invert'],
     )
-    def estimators(argv, util, parser, A, P):
+    def estimators(argv, util, parser, A, P, pr_subpop):
         quest = 0
+        invert = False
+        confidence = .95
         opts, args = parser(argv)
         for opt, arg in opts:
             if opt in ('-h', '--help',):
                 util.usage()
             elif opt in ('-q', '--question',):
                 quest = util.parse_int(arg) - 1
+            elif opt in ('-c', '--confidence',):
+                confidence = util.parse_float(arg)
+            elif opt in ('--invert',):
+                invert = True
             else:
                 util.log("unknown option %s" % (opt))
                 util.usage(1)
@@ -96,14 +115,29 @@ def main(argv, util, parser):
             util.log("invalid question #")
             util.usage(1)
 
-        q = question(A, quest)
-        Q = stats.Estimators(q, P)
+        if confidence < .5 or confidence >= 1.0:
+            util.log("invalid invalid confidence level")
+            util.usage(1)
+
+        q = question(A, quest, invert)
+        print len(q)
+        #q = [random.randint(0, 1) for _ in xrange(len(q))]
+        I = [i for i, pr in enumerate(P.prs) if pr > 1e-5]
+        q = [q[i] for i in I]
+        P._prs = [P.prs[i] for i in I]
+        #for i, pr in enumerate(P.prs):
+            #P.prs[i] = max(pr, 1e-6)
+        
+        Q = stats.HT_Estimators(q, P, confidence)
         print 'QUESTION', quest + 1
         print
-        print 'prs', [round(p, 3) for p in P.prs]
-        print 'pis', [round(p, 3) for p in P.pis]
+        print 'prs', [round(p, 5) for p in P.prs]
+        print 'pis', [round(p, 5) for p in P.pis]
         print
         print 'answers', Q.ys
+        print 'min non-zero prs', min(P.prs[i] for i in xrange(len(Q.ys)) if Q.ys[i] != 0)
+        print 'len(answers)', len(Q.ys)
+        print 'mean(answers)', np.mean(Q.ys)
         print
         print 'tau', Q.tau_hat
         print 'std(tau)', Q.std_tau_hat
@@ -114,16 +148,22 @@ def main(argv, util, parser):
         print 'interval(n)', Q.interval_n_hat
         print
         print 'mu', Q.mu_hat
+        var = Q.var_mu_hat
+        print 'var(mu)', var
         print 'std(mu)', Q.std_mu_hat
+        print 't_a/2', Q.a
         print 'interval(mu)', Q.interval_mu_hat
 
     clones = None
     answers = None
     questions = None
+    size = None
     opts, args = parser(argv)
     for opt, arg in opts:
         if opt in ('-h', '--help',):
             util.usage()
+        elif opt in ('-s', '--sample-size',):
+            size = util.parse_int(arg)
         elif opt in ('-c', '--clones',):
             clones = util.assert_file_exists(arg)
         elif opt in ('-a', '--answers',):
@@ -133,6 +173,10 @@ def main(argv, util, parser):
         else:
             util.log("unknown option %s" % (opt))
             util.usage(1)
+
+    if size is None:
+        util.log("must supply a sample size")
+        util.usage(1)
 
     if clones is None:
         util.log("must supply a base path to the clones")
@@ -144,14 +188,20 @@ def main(argv, util, parser):
     if questions is None:
         questions = util.assert_file_exists(os.path.join(clones, 'questions'))
 
+    pr_subpop = None
+    pr_subpop_path = os.path.join(clones, 'pr_subpop')
+    if os.path.exists(pr_subpop_path):
+        with open(pr_subpop_path) as f:
+            pr_subpop = [float(line.strip()) for line in f]
+
     A = load_answers(answers)
-    #P = stats.SampleProbabilities(prs(A))
-    P = stats.SampleProbabilities(prs_up(A, clones))
+    P = stats.SampleProbabilities(prs(A), size, pr_subpop)
+    #P = stats.SampleProbabilities(prs_up(A, clones))
 
     if len(args) == 0:
-        args = ['estimators', '-q', '1']
+        args = ['estimators', '-q', '1', '--invert']
 
-    util.run_command(args, A, P)
+    util.run_command(args, A, P, pr_subpop)
 
 
 if __name__ == '__main__':

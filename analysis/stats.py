@@ -2,13 +2,15 @@
 
 import math
 
-from scipy.stats import norm
+import numpy as np
+from scipy import stats
 
 
 class SampleProbabilities(object):
 
-    def __init__(self, prs):
-        self.n = len(prs)
+    def __init__(self, prs, size, pr_subpop):
+        self.n = size
+        self.pr_s = np.mean(pr_subpop)
         self._prs = prs
         self._pis = None
         self._jpis = None
@@ -30,7 +32,7 @@ class SampleProbabilities(object):
         return self._jpis
 
     def pi(self, i, prs, n):
-        return 1.0 - (1.0 - prs[i])**n
+        return 1.0 - ((1.0 - prs[i])**n)
 
     def jpi(self, i, j, prs, pis, n):
         return pis[i] + pis[j] - (1.0 - (1.0 - prs[i] - prs[j])**n)
@@ -49,16 +51,17 @@ class SampleProbabilities(object):
 
 class Estimators(object):
 
-    def __init__(self, ys, sample_probabilities):
+    def __init__(self, ys, sample_probabilities, confidence=.95):
         self.ys = ys
         self.p = sample_probabilities
-        self.a = norm.ppf(.90)
+        self.a = stats.t.ppf(confidence, self.p.n)
         self._tau_hat = None
         self._var_tau_hat = None
         self._n_hat = None
         self._var_n_hat = None
         self._mu_hat = None
         self._var_mu_hat = None
+
 
     @property
     def tau_hat(self):
@@ -116,6 +119,8 @@ class Estimators(object):
             self._var_mu_hat = self.c_var_mu_hat(
                 self.n_hat, self.mu_hat,
                 self.ys, self.p.pis, self.p.jpis)
+            ## self._var_mu_hat = self.c_var_p_hat(
+            ##      self.p.n, self.n_hat, self.mu_hat)
         return self._var_mu_hat
 
     @property
@@ -124,8 +129,13 @@ class Estimators(object):
 
     @property
     def interval_mu_hat(self):
-        i = self.a * self.std_mu_hat
+        i = self.a * self.var_mu_hat
         return (self.mu_hat + i, self.mu_hat - i)
+
+class HT_Estimators(Estimators):
+
+    def c_tau_hat(self, ys, pis):
+        return sum(ys[i]/pis[i] for i in xrange(len(pis)))
 
     def c_tau_hat(self, ys, pis):
         return sum(ys[i]/pis[i] for i in xrange(len(pis)))
@@ -149,6 +159,7 @@ class Estimators(object):
         return self.c_var_tau_hat([1 for _ in xrange(len(pis))], pis, jpis)
 
     def c_mu_hat(self, n_hat, ys, pis):
+        N = self.p.n/self.p.pr_s
         return (1.0/(n_hat))*self.c_tau_hat(ys, pis)
 
     def c_var_mu_hat(self, n_hat, mu, ys, pis, jpis):
@@ -156,11 +167,32 @@ class Estimators(object):
                 (1.0 - pis[i])/(pis[i]**2)
                 for i in xrange(len(pis)))
         b = sum(
-            ((jpis[i][j] - pis[i]*pis[j])/(pis[i]*pis[j]))
-                *(((ys[i] - mu)*(ys[j] - mu))/(jpis[i][j]))
+            (((jpis[i][j] - pis[i]*pis[j])/(pis[i]*pis[j])) * (((ys[i] - mu)*(ys[j] - mu))/(jpis[i][j])))
             for j in xrange(len(pis))
             for i in xrange(len(pis))
             if i != j
         )
-        return (1.0/(n_hat**2))*a + b
+        scale = (1.0/(n_hat**2))
+        print 'scale', scale
+        print 'a', a
+        print 'b', b
+        return scale*(a + b)
 
+    ## This is the estimate of the variance of the estimate of the proportion
+    ## as given by thompson on page 58. it seems to be work better?
+    def c_var_p_hat(self, n, n_hat, p_hat):
+        return ((n_hat - n)/(n_hat))*((p_hat*(1 - p_hat))/(n - 1))
+
+class P_Estimators(HT_Estimators):
+    ''' proportion estimators uses HT for tau'''
+
+    def c_mu_hat(self, n_hat, ys, pis):
+        N = self.p.n/self.p.pr_s
+        print N
+        print self.p.n
+        print sum(ys[i]*self.p.prs[i] for i in xrange(len(ys)))
+        a = self.p.n*sum(ys[i]*self.p.prs[i] for i in xrange(len(ys)))
+        return a
+
+    def c_var_mu_hat(self, n_hat, mu, ys, pis, jpis):
+        return mu - (mu**2)

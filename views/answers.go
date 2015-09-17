@@ -55,6 +55,10 @@ func (v *Views) Answer(c *Context) {
 		return
 	}
 	var next string
+	var prev string
+	if aid > 0 {
+		prev = fmt.Sprintf("/answers/%d", aid - 1)
+	}
 	var answer *models.SurveyAnswer
 	err = v.survey.Do(func (s *models.Survey) error {
 		if aid >= len(s.Answers) {
@@ -78,6 +82,7 @@ func (v *Views) Answer(c *Context) {
 		"cid": answer.CloneID,
 		"clone": v.clones[answer.CloneID],
 		"next": next,
+		"prev": prev,
 		"mark": func(answer string) template.HTML {
 			unsafe := blackfriday.MarkdownCommon([]byte(answer))
 			html := bluemonday.UGCPolicy().SanitizeBytes(unsafe)

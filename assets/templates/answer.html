@@ -17,9 +17,8 @@
 </div>
 {{end}}
 {{end}}
-{{if .next}}
-<p><a href={{.next}}>Take me to the next answer</a></p>
-{{end}}
+{{if .prev}}<p><a href={{.prev}}>prev</a></p>{{end}}
+{{if .next}}<p><a href={{.next}}>next</a></p>{{end}}
 </div>
 
 <div class="clone">
@@ -67,8 +66,7 @@
 </div>
 {{end}}
 {{end}}
-{{if .next}}
-<p><a href={{.next}}>Take me to the next answer</a></p>
-{{end}}
+{{if .prev}}<p><a href={{.prev}}>prev</a></p>{{end}}
+{{if .next}}<p><a href={{.next}}>next</a></p>{{end}}
 </div>
 {{template "footer"}}
