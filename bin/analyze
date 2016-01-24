@@ -8,55 +8,9 @@ import random
 import numpy as np
 import optutils
 
-from analysis import stats
-
+from analysis import stats, load
 
 random.seed(os.urandom(8))
-
-def load_answers(path):
-    with open(path) as f:
-        return [
-            json.loads(line)
-            for line in f
-        ]
-
-def prs(answers):
-    return [
-        line['ConditionalPr']
-        for line in answers
-    ]
-
-def load_conditional_interval(base, clone_id):
-    path = os.path.join(base, str(clone_id), 'conditional.interval.pr')
-    with open(path) as f:
-        return [
-            float(line.strip())
-            for line in f
-        ]
-
-def prs_up(answers, base):
-    return [
-        load_conditional_interval(base, line['CloneExtID'])[1]
-        for line in answers
-    ]
-
-def prs_down(answers, base):
-    return [
-        load_conditional_interval(base, line['CloneExtID'])[0]
-        for line in answers
-    ]
-
-def question(answers, n, invert=False):
-    if invert:
-        return [
-            abs(1 - line['Responses'][n]['Answer'])
-            for line in answers
-        ]
-    else:
-        return [
-            line['Responses'][n]['Answer']
-            for line in answers
-        ]
 
 @optutils.main(
 'analyze -c <clones> -a <answers> -q <questions>',
@@ -84,15 +38,17 @@ def main(argv, util, parser):
 
         -q, --question=<int>                  which question to est
         -c, --confident=<float>               confidence (.95 default)
+        -p, --pos=<int>                       answers to map to 1 (other go to 0)
         --invert                              invert the values (for proportion)
         ''',
-        'hq:c:',
-        ['help','question=', 'confidence=', 'invert'],
+        'hq:c:p:',
+        ['help','question=', 'confidence=', 'pos=', 'invert'],
     )
     def estimators(argv, util, parser, A, P, pr_subpop):
         quest = 0
         invert = False
         confidence = .95
+        pos_set = set()
         opts, args = parser(argv)
         for opt, arg in opts:
             if opt in ('-h', '--help',):
@@ -103,6 +59,8 @@ def main(argv, util, parser):
                 confidence = util.parse_float(arg)
             elif opt in ('--invert',):
                 invert = True
+            elif opt in ('-p', '--pos'):
+                pos_set.add(util.parse_int(arg))
             else:
                 util.log("unknown option %s" % (opt))
                 util.usage(1)
@@ -119,15 +77,25 @@ def main(argv, util, parser):
             util.log("invalid invalid confidence level")
             util.usage(1)
 
-        q = question(A, quest, invert)
+        q = load.question(A, quest, invert)
         print len(q)
-        #q = [random.randint(0, 1) for _ in xrange(len(q))]
+
+        ## discard negative answers for they are invalid
+        #I = [i for i, a in enumerate(q) if a >= 0]
+        #q = [q[i] for i in I]
+        #P._prs = [P.prs[i] for i in I]
+
+        ## do answer mapping
+        if pos_set:
+            q = [1 if a in pos_set else 0 for a in q]
+
+        ## discard low probabilities
         I = [i for i, pr in enumerate(P.prs) if pr > 1e-5]
         q = [q[i] for i in I]
         P._prs = [P.prs[i] for i in I]
         #for i, pr in enumerate(P.prs):
             #P.prs[i] = max(pr, 1e-6)
-        
+
         Q = stats.HT_Estimators(q, P, confidence)
         print 'QUESTION', quest + 1
         print
@@ -135,6 +103,7 @@ def main(argv, util, parser):
         print 'pis', [round(p, 5) for p in P.pis]
         print
         print 'answers', Q.ys
+        print 'sum(answers)', sum(Q.ys)
         print 'min non-zero prs', min(P.prs[i] for i in xrange(len(Q.ys)) if Q.ys[i] != 0)
         print 'len(answers)', len(Q.ys)
         print 'mean(answers)', np.mean(Q.ys)
@@ -194,8 +163,8 @@ def main(argv, util, parser):
         with open(pr_subpop_path) as f:
             pr_subpop = [float(line.strip()) for line in f]
 
-    A = load_answers(answers)
-    P = stats.SampleProbabilities(prs(A), size, pr_subpop)
+    A = load.load_answers(answers)
+    P = stats.SampleProbabilities(load.prs(A), size, pr_subpop)
     #P = stats.SampleProbabilities(prs_up(A, clones))
 
     if len(args) == 0:
