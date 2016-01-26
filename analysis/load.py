@@ -73,13 +73,14 @@ def prs_down(answers, base):
         for line in answers
     ]
 
-def question(answers, n, invert=False):
+def question(questions, answers, n, invert=False):
     if invert:
         return [
             abs(1 - line['Responses'][n]['Answer'])
             for line in answers
         ]
     else:
+        print questions[n]['Question']
         return [
             line['Responses'][n]['Answer']
             for line in answers

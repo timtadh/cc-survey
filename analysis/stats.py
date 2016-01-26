@@ -8,9 +8,8 @@ from scipy import stats
 
 class SampleProbabilities(object):
 
-    def __init__(self, prs, size, pr_subpop):
+    def __init__(self, prs, size):
         self.n = size
-        self.pr_s = np.mean(pr_subpop)
         self._prs = prs
         self._pis = None
         self._jpis = None
@@ -83,7 +82,7 @@ class Estimators(object):
     @property
     def interval_tau_hat(self):
         i = self.a * self.std_tau_hat
-        return (self.tau_hat + i, self.tau_hat - i)
+        return (self.tau_hat - i, self.tau_hat + i)
 
     @property
     def n_hat(self):
@@ -104,7 +103,7 @@ class Estimators(object):
     @property
     def interval_n_hat(self):
         i = self.a * self.std_n_hat
-        return (self.n_hat + i, self.n_hat - i)
+        return (self.n_hat - i, self.n_hat + i)
 
     @property
     def mu_hat(self):
@@ -130,7 +129,7 @@ class Estimators(object):
     @property
     def interval_mu_hat(self):
         i = self.a * self.var_mu_hat
-        return (self.mu_hat + i, self.mu_hat - i)
+        return (self.mu_hat - i, self.mu_hat + i)
 
 class HT_Estimators(Estimators):
 
@@ -159,7 +158,6 @@ class HT_Estimators(Estimators):
         return self.c_var_tau_hat([1 for _ in xrange(len(pis))], pis, jpis)
 
     def c_mu_hat(self, n_hat, ys, pis):
-        N = self.p.n/self.p.pr_s
         return (1.0/(n_hat))*self.c_tau_hat(ys, pis)
 
     def c_var_mu_hat(self, n_hat, mu, ys, pis, jpis):
@@ -183,16 +181,3 @@ class HT_Estimators(Estimators):
     def c_var_p_hat(self, n, n_hat, p_hat):
         return ((n_hat - n)/(n_hat))*((p_hat*(1 - p_hat))/(n - 1))
 
-class P_Estimators(HT_Estimators):
-    ''' proportion estimators uses HT for tau'''
-
-    def c_mu_hat(self, n_hat, ys, pis):
-        N = self.p.n/self.p.pr_s
-        print N
-        print self.p.n
-        print sum(ys[i]*self.p.prs[i] for i in xrange(len(ys)))
-        a = self.p.n*sum(ys[i]*self.p.prs[i] for i in xrange(len(ys)))
-        return a
-
-    def c_var_mu_hat(self, n_hat, mu, ys, pis, jpis):
-        return mu - (mu**2)

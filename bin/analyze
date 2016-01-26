@@ -44,7 +44,7 @@ def main(argv, util, parser):
         'hq:c:p:',
         ['help','question=', 'confidence=', 'pos=', 'invert'],
     )
-    def estimators(argv, util, parser, A, P, pr_subpop):
+    def estimators(argv, util, parser, A, P):
         quest = 0
         invert = False
         confidence = .95
@@ -60,7 +60,9 @@ def main(argv, util, parser):
             elif opt in ('--invert',):
                 invert = True
             elif opt in ('-p', '--pos'):
-                pos_set.add(util.parse_int(arg))
+                p = util.parse_int(arg)
+                pos_set.add(p)
+                print questions[quest]['Answers'][p]
             else:
                 util.log("unknown option %s" % (opt))
                 util.usage(1)
@@ -77,7 +79,7 @@ def main(argv, util, parser):
             util.log("invalid invalid confidence level")
             util.usage(1)
 
-        q = load.question(A, quest, invert)
+        q = load.question(questions, A, quest, invert)
         print len(q)
 
         ## discard negative answers for they are invalid
@@ -85,16 +87,19 @@ def main(argv, util, parser):
         #q = [q[i] for i in I]
         #P._prs = [P.prs[i] for i in I]
 
-        ## do answer mapping
-        if pos_set:
-            q = [1 if a in pos_set else 0 for a in q]
 
         ## discard low probabilities
-        I = [i for i, pr in enumerate(P.prs) if pr > 1e-5]
+        I = [i for i, pr in enumerate(P.prs) if pr > 1e-6]# and q[i] >= 0]
+
+        #I = [i for i, pr in enumerate(P.prs) if pr > 1e-5]
         q = [q[i] for i in I]
         P._prs = [P.prs[i] for i in I]
         #for i, pr in enumerate(P.prs):
             #P.prs[i] = max(pr, 1e-6)
+
+        ## do answer mapping
+        if pos_set:
+            q = [1 if a in pos_set else 0 for a in q]
 
         Q = stats.HT_Estimators(q, P, confidence)
         print 'QUESTION', quest + 1
@@ -106,7 +111,7 @@ def main(argv, util, parser):
         print 'sum(answers)', sum(Q.ys)
         print 'min non-zero prs', min(P.prs[i] for i in xrange(len(Q.ys)) if Q.ys[i] != 0)
         print 'len(answers)', len(Q.ys)
-        print 'mean(answers)', np.mean(Q.ys)
+        print 'mean(answers)', round(np.mean(Q.ys), 2)
         print
         print 'tau', Q.tau_hat
         print 'std(tau)', Q.std_tau_hat
@@ -116,12 +121,12 @@ def main(argv, util, parser):
         print 'std(n)', Q.std_n_hat
         print 'interval(n)', Q.interval_n_hat
         print
-        print 'mu', Q.mu_hat
+        print 'mu', round(Q.mu_hat, 2)
         var = Q.var_mu_hat
-        print 'var(mu)', var
-        print 'std(mu)', Q.std_mu_hat
+        print 'var(mu)', round(var, 2)
+        print 'std(mu)', round(Q.std_mu_hat, 2)
         print 't_a/2', Q.a
-        print 'interval(mu)', Q.interval_mu_hat
+        print 'interval(mu)', round(Q.interval_mu_hat[0], 2), round(Q.interval_mu_hat[1], 2)
 
     clones = None
     answers = None
@@ -155,22 +160,16 @@ def main(argv, util, parser):
         answers = util.assert_file_exists(os.path.join(clones, 'answers'))
 
     if questions is None:
-        questions = util.assert_file_exists(os.path.join(clones, 'questions'))
-
-    pr_subpop = None
-    pr_subpop_path = os.path.join(clones, 'pr_subpop')
-    if os.path.exists(pr_subpop_path):
-        with open(pr_subpop_path) as f:
-            pr_subpop = [float(line.strip()) for line in f]
+        questions = json.loads(util.read_file_or_die(os.path.join(clones, 'questions')))
 
     A = load.load_answers(answers)
-    P = stats.SampleProbabilities(load.prs(A), size, pr_subpop)
+    P = stats.SampleProbabilities(load.sel_prs(A), size)
     #P = stats.SampleProbabilities(prs_up(A, clones))
 
     if len(args) == 0:
         args = ['estimators', '-q', '1', '--invert']
 
-    util.run_command(args, A, P, pr_subpop)
+    util.run_command(args, A, P)
 
 
 if __name__ == '__main__':
